@@ -4,9 +4,25 @@ module Markdowndocs
   class ApplicationController < ::ApplicationController
     protect_from_forgery with: :exception
 
-    # Make host app route helpers available in engine views
-    # (needed because isolate_namespace blocks host helpers by default)
-    helper Rails.application.routes.url_helpers
+    # Delegate unresolved route helpers to the host app via main_app.
+    # isolate_namespace blocks host helpers by default, and the commonly-used
+    # `helper Rails.application.routes.url_helpers` doesn't reliably win the
+    # method-lookup race — so host-app links like about_path can resolve
+    # against the engine's catch-all :slug route instead.  This delegation
+    # ensures host app route helpers always work correctly in engine views.
+    helper do
+      def method_missing(method, *args, &block)
+        if main_app.respond_to?(method)
+          main_app.send(method, *args, &block)
+        else
+          super
+        end
+      end
+
+      def respond_to_missing?(method, include_private = false)
+        main_app.respond_to?(method, include_private) || super
+      end
+    end
 
     # Support Rails 8 built-in authentication (allow_unauthenticated_access)
     # without requiring it — works with any auth system or none at all
