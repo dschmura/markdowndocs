@@ -49,7 +49,7 @@ module Markdowndocs
         html = doc.to_html(options: Markdowndocs.config.markdown_options)
         html = apply_syntax_highlighting(html)
         sanitize_html(html)
-      rescue StandardError => e
+      rescue => e
         Rails.logger.error("Markdowndocs::MarkdownRenderer error: #{e.message}")
         Rails.logger.error(e.backtrace.join("\n"))
         ""
@@ -76,7 +76,7 @@ module Markdowndocs
 
       def lexer_exists?(language)
         Rouge::Lexer.find(language).present?
-      rescue StandardError
+      rescue
         false
       end
 
@@ -86,7 +86,7 @@ module Markdowndocs
 
         highlighted = formatter.format(lexer.lex(code))
         "<pre class=\"highlight\"><code>#{highlighted}</code></pre>"
-      rescue StandardError => e
+      rescue => e
         Rails.logger.warn("Syntax highlighting failed for language '#{language}': #{e.message}")
         "<pre><code>#{ERB::Util.html_escape(code)}</code></pre>"
       end

@@ -259,6 +259,29 @@ After checking out the repo, run `bin/setup` to install dependencies. Then run t
 bundle exec rspec
 ```
 
+## Releasing
+
+1. Update `CHANGELOG.md` with a new `## [x.y.z] - YYYY-MM-DD` section and add a comparison link at the bottom.
+
+2. Bump the version in `lib/markdowndocs/version.rb`:
+
+   ```ruby
+   module Markdowndocs
+     VERSION = "x.y.z"
+   end
+   ```
+
+3. Commit and tag the release:
+
+   ```bash
+   git add lib/markdowndocs/version.rb CHANGELOG.md
+   git commit -m "Release vx.y.z"
+   git tag vx.y.z
+   git push origin main --tags
+   ```
+
+   Pushing the tag triggers the GitHub Actions release workflow, which builds and publishes the gem to RubyGems automatically.
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at [github.com/dschmura/markdowndocs](https://github.com/dschmura/markdowndocs).

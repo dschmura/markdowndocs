@@ -31,7 +31,7 @@ module Markdowndocs
       return nil unless file_path.exist?
 
       new(file_path)
-    rescue StandardError => e
+    rescue => e
       Rails.logger.error("Error finding documentation by slug '#{slug}': #{e.message}")
       nil
     end
@@ -48,7 +48,7 @@ module Markdowndocs
 
     def content
       @content ||= file_path.read
-    rescue StandardError => e
+    rescue => e
       Rails.logger.error("Error reading documentation file '#{file_path}': #{e.message}")
       ""
     end
@@ -59,7 +59,7 @@ module Markdowndocs
 
     def mtime
       @mtime ||= file_path.mtime
-    rescue StandardError
+    rescue
       Time.current
     end
 

@@ -28,8 +28,7 @@ module Markdowndocs
       text.to_s
         .downcase
         .gsub(/[^\w\s-]/, "")
-        .gsub(/\s+/, "-")
-        .gsub(/-+/, "-")
+        .gsub(/\s+/, "-").squeeze("-")
         .gsub(/^-|-$/, "")
     end
 

@@ -69,7 +69,7 @@ module Markdowndocs
       return nil unless resolver.respond_to?(:call)
 
       resolver.call(self)
-    rescue StandardError
+    rescue
       nil
     end
   end

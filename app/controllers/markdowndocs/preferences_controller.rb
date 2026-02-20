@@ -15,7 +15,7 @@ module Markdowndocs
       if saver.respond_to?(:call)
         begin
           saver.call(self, mode)
-        rescue StandardError => e
+        rescue => e
           Rails.logger.warn("Markdowndocs: user_mode_saver failed: #{e.message}")
         end
       end
