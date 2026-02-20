@@ -16,7 +16,7 @@ module Markdowndocs
       @doc = Documentation.find_by_slug(params[:slug])
 
       if @doc.nil?
-        render file: Rails.public_path.join("404.html"), status: :not_found, layout: false
+        render_not_found
         return
       end
 
@@ -37,7 +37,16 @@ module Markdowndocs
       slug = params[:slug].to_s
 
       unless slug.match?(SAFE_SLUG_PATTERN)
-        render file: Rails.public_path.join("404.html"), status: :not_found, layout: false
+        render_not_found
+      end
+    end
+
+    def render_not_found
+      file_404 = Rails.public_path.join("404.html")
+      if file_404.exist?
+        render file: file_404, status: :not_found, layout: false
+      else
+        head :not_found
       end
     end
 
