@@ -11,6 +11,18 @@ module Markdowndocs
     # against the engine's catch-all :slug route instead.  This delegation
     # ensures host app route helpers always work correctly in engine views.
     helper do
+      # Explicitly delegate root_path/root_url to the host app.
+      # The engine defines its own root route, so these helpers exist in the
+      # engine scope and method_missing won't intercept them — but they resolve
+      # to /docs/ instead of /. Engine views use markdowndocs.root_path directly.
+      def root_path(*args)
+        main_app.root_path(*args)
+      end
+
+      def root_url(*args)
+        main_app.root_url(*args)
+      end
+
       def method_missing(method, *args, &block)
         if main_app.respond_to?(method)
           main_app.send(method, *args, &block)

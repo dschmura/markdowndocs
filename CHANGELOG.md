@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2026-02-20
+
+### Fixed
+
+- `root_path` in host app layouts now resolves to the host app's root (`/`) instead of the engine's root (`/docs/`). The engine defines its own `root` route, so the existing `method_missing` delegation couldn't intercept it. Added explicit `root_path`/`root_url` overrides that delegate to `main_app`.
+
 ## [0.1.1] - 2026-02-20
 
 ### Fixed
@@ -29,5 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - i18n support for all UI strings
 - Install generator (`rails generate markdowndocs:install`)
 
+[0.1.2]: https://github.com/dschmura/markdowndocs/releases/tag/v0.1.2
 [0.1.1]: https://github.com/dschmura/markdowndocs/releases/tag/v0.1.1
 [0.1.0]: https://github.com/dschmura/markdowndocs/releases/tag/v0.1.0
