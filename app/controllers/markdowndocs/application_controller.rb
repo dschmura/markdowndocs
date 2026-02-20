@@ -4,6 +4,10 @@ module Markdowndocs
   class ApplicationController < ::ApplicationController
     protect_from_forgery with: :exception
 
+    # Make host app route helpers available in engine views
+    # (needed because isolate_namespace blocks host helpers by default)
+    helper Rails.application.routes.url_helpers
+
     # Support Rails 8 built-in authentication (allow_unauthenticated_access)
     # without requiring it — works with any auth system or none at all
     if respond_to?(:allow_unauthenticated_access)
