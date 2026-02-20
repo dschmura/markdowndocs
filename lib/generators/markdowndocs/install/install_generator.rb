@@ -20,6 +20,25 @@ module Markdowndocs
         route 'mount Markdowndocs::Engine, at: "/docs"'
       end
 
+      def inject_tailwind_source
+        css_file = find_tailwind_css_file
+        return unless css_file
+
+        gem_views_path = Markdowndocs::Engine.root.join("app", "views")
+        source_line = %(@source "#{gem_views_path}/**/*.erb";)
+
+        if File.read(css_file).include?(source_line)
+          say_status :skip, "Tailwind @source for markdowndocs already present", :yellow
+          return
+        end
+
+        inject_into_file css_file, after: %(@import "tailwindcss";\n) do
+          "\n/* Markdowndocs gem views — required so Tailwind scans the gem's templates */\n#{source_line}\n"
+        end
+
+        say_status :inject, "Tailwind @source for markdowndocs views", :green
+      end
+
       def show_post_install_message
         say ""
         say "Markdowndocs installed successfully!", :green
@@ -29,6 +48,22 @@ module Markdowndocs
         say "  2. Add markdown files to app/docs/"
         say "  3. Visit /docs to see your documentation"
         say ""
+        unless find_tailwind_css_file
+          say "  NOTE: Could not find your Tailwind CSS file.", :yellow
+          say "  Add this line after @import \"tailwindcss\" in your CSS:"
+          say "    @source \"#{Markdowndocs::Engine.root.join("app", "views")}/**/*.erb\";"
+          say ""
+        end
+      end
+
+      private
+
+      def find_tailwind_css_file
+        candidates = [
+          "app/assets/tailwind/application.css",
+          "app/assets/stylesheets/application.tailwind.css"
+        ]
+        candidates.find { |f| File.exist?(Rails.root.join(f)) }&.then { |f| Rails.root.join(f).to_s }
       end
     end
   end

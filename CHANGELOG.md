@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2026-02-20
+
+### Fixed
+
+- Install generator now injects a Tailwind `@source` directive into the host app's CSS so the gem's view templates are scanned for CSS classes. Without this, Tailwind 4 purges the gem's layout classes (grid, sticky sidebar, etc.) and the sidebar renders at the bottom of the page instead of as a column.
+
 ## [0.1.2] - 2026-02-20
 
 ### Fixed
@@ -35,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - i18n support for all UI strings
 - Install generator (`rails generate markdowndocs:install`)
 
+[0.1.3]: https://github.com/dschmura/markdowndocs/releases/tag/v0.1.3
 [0.1.2]: https://github.com/dschmura/markdowndocs/releases/tag/v0.1.2
 [0.1.1]: https://github.com/dschmura/markdowndocs/releases/tag/v0.1.1
 [0.1.0]: https://github.com/dschmura/markdowndocs/releases/tag/v0.1.0
