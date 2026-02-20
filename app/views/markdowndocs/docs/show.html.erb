@@ -28,27 +28,46 @@
         </article>
       </main>
 
-      <!-- Sidebar (Desktop: visible, Mobile: toggleable) -->
+      <!-- Sidebar (Desktop: visible, Mobile: hamburger dropdown) -->
       <div class="lg:col-span-4">
-        <!-- Mobile toggle button -->
+        <!-- Mobile hamburger toggle -->
         <button
+          id="sidebar-toggle"
           type="button"
           class="w-full mb-4 px-4 py-2 bg-white rounded-lg shadow-sm text-gray-700 transition-colors flex items-center justify-between
               hover:bg-gray-50
               lg:hidden"
-          onclick="document.getElementById('mobile-sidebar').classList.toggle('hidden')"
-          aria-label="Toggle navigation"
+          aria-label="<%= t("markdowndocs.navigation_sidebar") %>"
           aria-expanded="false"
-          aria-controls="mobile-sidebar">
+          aria-controls="mobile-sidebar"
+          onclick="(function(btn) {
+            var sidebar = document.getElementById('mobile-sidebar');
+            var isOpen = btn.getAttribute('aria-expanded') === 'true';
+            btn.setAttribute('aria-expanded', !isOpen);
+            btn.querySelector('.icon-open').classList.toggle('hidden', !isOpen);
+            btn.querySelector('.icon-close').classList.toggle('hidden', isOpen);
+            if (isOpen) {
+              sidebar.style.maxHeight = '0px';
+            } else {
+              sidebar.style.maxHeight = sidebar.scrollHeight + 'px';
+            }
+          })(this)">
           <span class="font-medium"><%= t("markdowndocs.navigation_sidebar") %></span>
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          <!-- Hamburger icon (shown when closed) -->
+          <svg class="icon-open w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          <!-- X icon (shown when open) -->
+          <svg class="icon-close w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
 
-        <!-- Sidebar content (sticky on desktop) -->
-        <div id="mobile-sidebar" class="hidden
-              lg:block lg:sticky lg:top-8">
+        <!-- Sidebar content (sticky on desktop, animated dropdown on mobile) -->
+        <div id="mobile-sidebar"
+             class="overflow-hidden transition-all duration-300 ease-in-out
+                    lg:!max-h-none lg:!overflow-visible lg:sticky lg:top-8"
+             style="max-height: 0px;">
           <%= render "markdowndocs/docs/navigation",
             rendered_content: @rendered_content,
             related_docs: @related_docs,
