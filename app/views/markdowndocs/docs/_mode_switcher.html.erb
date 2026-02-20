@@ -1,0 +1,73 @@
+<%# locals: (current_mode:, available_modes:) %>
+<div
+  id="docs-mode-switcher"
+  class="
+    bg-white
+    rounded-lg
+    border
+    border-slate-200
+    p-4
+  "
+  data-controller="docs-mode"
+  data-docs-mode-current-value="<%= current_mode %>"
+>
+  <h3 class="
+    text-sm
+    font-medium
+    text-slate-700
+    mb-3
+  ">
+    <%= t("markdowndocs.viewing_mode") %>
+  </h3>
+
+  <div
+    class="space-y-2"
+    role="radiogroup"
+    aria-label="<%= t('markdowndocs.select_viewing_mode') %>"
+  >
+    <% available_modes.each do |mode| %>
+      <%= form_with(
+        url: markdowndocs.preference_path,
+        method: :patch,
+        data: {
+          turbo_action: "replace"
+        }
+      ) do |f| %>
+        <%= f.hidden_field :mode, value: mode %>
+        <button
+          type="submit"
+          role="radio"
+          aria-checked="<%= current_mode == mode %>"
+          class="
+            w-full
+            text-left
+            p-3
+            rounded-lg
+            border-2
+            transition-all
+            duration-150
+            <%= (current_mode == mode) ? 'border-cyan-500 bg-cyan-50' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50' %>
+          "
+        >
+          <span class="
+            block
+            font-medium
+            <%= (current_mode == mode) ? 'text-cyan-700' : 'text-slate-900' %>
+          ">
+            <%= t("markdowndocs.modes.#{mode}", default: mode.titleize) %>
+          </span>
+          <% description = t("markdowndocs.modes.#{mode}_description", default: "") %>
+          <% if description.present? %>
+            <p class="
+              text-xs
+              mt-1
+              <%= (current_mode == mode) ? 'text-cyan-800' : 'text-slate-600' %>
+            ">
+              <%= description %>
+            </p>
+          <% end %>
+        </button>
+      <% end %>
+    <% end %>
+  </div>
+</div>

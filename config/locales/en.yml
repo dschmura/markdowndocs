@@ -1,0 +1,11 @@
+en:
+  markdowndocs:
+    back_to_documentation: "Back to Documentation"
+    navigation_sidebar: "Navigation & Related Docs"
+    viewing_mode: "Viewing Mode"
+    select_viewing_mode: "Select documentation viewing mode"
+    modes:
+      guide: "User Guide"
+      guide_description: "User-friendly explanations and step-by-step instructions"
+      technical: "Developer Guide"
+      technical_description: "Code examples, architecture, and implementation details"

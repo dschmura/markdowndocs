@@ -1,0 +1,62 @@
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 py-12
+        sm:px-6
+        lg:px-8">
+    <!-- Back link -->
+    <div class="mb-6">
+      <%= link_to markdowndocs.root_path, class: "inline-flex items-center text-indigo-600 transition-colors
+            hover:text-indigo-700" do %>
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        <%= t("markdowndocs.back_to_documentation") %>
+      <% end %>
+    </div>
+
+    <!-- Breadcrumb -->
+    <%= render "markdowndocs/docs/breadcrumb", category: @doc.category, title: @doc.title %>
+
+    <!-- Two-column layout -->
+    <div class="grid grid-cols-1 gap-8
+          lg:grid-cols-12">
+      <!-- Main content -->
+      <main class="lg:col-span-8">
+        <article class="bg-white rounded-lg shadow-sm p-8">
+          <div class="prose prose-indigo max-w-none">
+            <%= raw @rendered_content %>
+          </div>
+        </article>
+      </main>
+
+      <!-- Sidebar (Desktop: visible, Mobile: toggleable) -->
+      <div class="lg:col-span-4">
+        <!-- Mobile toggle button -->
+        <button
+          type="button"
+          class="w-full mb-4 px-4 py-2 bg-white rounded-lg shadow-sm text-gray-700 transition-colors flex items-center justify-between
+              hover:bg-gray-50
+              lg:hidden"
+          onclick="document.getElementById('mobile-sidebar').classList.toggle('hidden')"
+          aria-label="Toggle navigation"
+          aria-expanded="false"
+          aria-controls="mobile-sidebar">
+          <span class="font-medium"><%= t("markdowndocs.navigation_sidebar") %></span>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        <!-- Sidebar content (sticky on desktop) -->
+        <div id="mobile-sidebar" class="hidden
+              lg:block lg:sticky lg:top-8">
+          <%= render "markdowndocs/docs/navigation",
+            rendered_content: @rendered_content,
+            related_docs: @related_docs,
+            current_mode: @docs_mode,
+            available_modes: @available_modes,
+            toc_items: @toc_items %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
