@@ -82,5 +82,9 @@ RSpec.describe Markdowndocs do
     it "defaults resolved_docs_path to Rails.root/app/docs" do
       expect(described_class.config.resolved_docs_path).to eq(Rails.root.join("app", "docs"))
     end
+
+    it "defaults search_enabled to false" do
+      expect(described_class.config.search_enabled).to be false
+    end
   end
 end

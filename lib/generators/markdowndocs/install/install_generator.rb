@@ -20,6 +20,28 @@ module Markdowndocs
         route 'mount Markdowndocs::Engine, at: "/docs"'
       end
 
+      def pin_importmap_assets
+        importmap_file = Rails.root.join("config/importmap.rb").to_s
+        return unless File.exist?(importmap_file)
+
+        importmap_content = File.read(importmap_file)
+
+        pins = {
+          'pin "markdowndocs/controllers/docs_search_controller", to: "markdowndocs/controllers/docs_search_controller.js"' => "docs_search_controller",
+          'pin "markdowndocs/controllers/docs_mode_controller", to: "markdowndocs/controllers/docs_mode_controller.js"' => "docs_mode_controller",
+          'pin "minisearch", to: "markdowndocs/vendor/minisearch.min.js"' => "minisearch"
+        }
+
+        pins.each do |pin_line, name|
+          if importmap_content.include?(pin_line)
+            say_status :skip, "importmap pin for #{name} already present", :yellow
+          else
+            append_to_file importmap_file, "\n#{pin_line}\n"
+            say_status :pin, name, :green
+          end
+        end
+      end
+
       def inject_tailwind_source
         css_file = find_tailwind_css_file
         return unless css_file
@@ -54,6 +76,11 @@ module Markdowndocs
           say "    @source \"#{Markdowndocs::Engine.root.join("app", "views")}/**/*.erb\";"
           say ""
         end
+        say "  Stimulus controllers are auto-registered via importmap.", :green
+        say "  If you use a custom Stimulus setup, register these controllers:"
+        say "    - markdowndocs/controllers/docs_mode_controller"
+        say "    - markdowndocs/controllers/docs_search_controller (when search is enabled)"
+        say ""
       end
 
       private

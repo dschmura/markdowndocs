@@ -73,6 +73,23 @@ RSpec.describe Markdowndocs::Documentation do
     end
   end
 
+  describe "#plain_text_content" do
+    it "strips frontmatter and markdown syntax" do
+      doc = described_class.find_by_slug("welcome")
+      text = doc.plain_text_content
+      expect(text).not_to include("---")
+      expect(text).not_to include("# ")
+      expect(text).not_to include("**")
+    end
+
+    it "returns searchable plain text" do
+      doc = described_class.find_by_slug("welcome")
+      text = doc.plain_text_content
+      expect(text).to be_present
+      expect(text.length).to be > 0
+    end
+  end
+
   describe "#cache_key" do
     it "includes slug and mtime" do
       doc = described_class.find_by_slug("welcome")

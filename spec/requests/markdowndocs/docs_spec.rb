@@ -55,6 +55,45 @@ RSpec.describe "Markdowndocs::Docs", type: :request do
     end
   end
 
+  describe "GET /docs/search_index" do
+    context "when search is disabled" do
+      before { Markdowndocs.config.search_enabled = false }
+
+      it "returns 404" do
+        get "/docs/search_index"
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+
+    context "when search is enabled" do
+      before { Markdowndocs.config.search_enabled = true }
+      after { Markdowndocs.config.search_enabled = false }
+
+      it "returns JSON" do
+        get "/docs/search_index"
+        expect(response).to have_http_status(:ok)
+        expect(response.content_type).to include("application/json")
+      end
+
+      it "includes document data" do
+        get "/docs/search_index"
+        json = JSON.parse(response.body)
+        slugs = json.map { |d| d["id"] }
+        expect(slugs).to include("welcome")
+        expect(slugs).to include("quickstart")
+      end
+
+      it "includes title, description, and content fields" do
+        get "/docs/search_index"
+        json = JSON.parse(response.body)
+        doc = json.find { |d| d["id"] == "welcome" }
+        expect(doc).to have_key("title")
+        expect(doc).to have_key("description")
+        expect(doc).to have_key("content")
+      end
+    end
+  end
+
   describe "PATCH /docs/preference" do
     it "sets mode cookie and redirects" do
       patch "/docs/preference", params: {mode: "technical"}, headers: {"HTTP_REFERER" => "/docs"}

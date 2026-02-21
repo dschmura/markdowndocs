@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-02-21
+
+### Fixed
+
+- Stimulus controllers and vendored minisearch now auto-register with the host app's importmap. Previously, host apps had to manually add pins to `config/importmap.rb`.
+- Engine now registers `app/assets/javascripts` in the asset pipeline paths so Propshaft/Sprockets can serve the JS files.
+- Install generator now injects importmap pins into the host app's `config/importmap.rb` during installation.
+- Both asset and importmap initializers gracefully skip when the host app doesn't use the relevant gems.
+
 ## [0.2.0] - 2026-02-21
 
 ### Added
@@ -67,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - i18n support for all UI strings
 - Install generator (`rails generate markdowndocs:install`)
 
+[0.2.1]: https://github.com/dschmura/markdowndocs/releases/tag/v0.2.1
 [0.2.0]: https://github.com/dschmura/markdowndocs/releases/tag/v0.2.0
 [0.1.5]: https://github.com/dschmura/markdowndocs/releases/tag/v0.1.5
 [0.1.4]: https://github.com/dschmura/markdowndocs/releases/tag/v0.1.4
