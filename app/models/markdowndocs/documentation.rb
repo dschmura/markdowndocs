@@ -83,6 +83,21 @@ module Markdowndocs
       available_modes.include?(mode.to_s)
     end
 
+    # Returns content stripped of frontmatter, markdown syntax, and HTML tags
+    # for use in search indexing.
+    def plain_text_content
+      parsed = parse_frontmatter
+      text = parsed[:markdown]
+      text = text.gsub(/^#+\s*/, "")          # headings
+      text = text.gsub(/\[([^\]]+)\]\([^)]+\)/, '\1') # links
+      text = text.gsub(/[*_~`]/, "")          # emphasis markers
+      text = text.gsub(/```[\s\S]*?```/, "")  # fenced code blocks
+      text = text.gsub(/<[^>]+>/, "")         # HTML tags
+      text = text.gsub(/^\s*[-*+]\s/, "")     # list markers
+      text = text.gsub(/\n{2,}/, "\n")        # collapse blank lines
+      text.strip
+    end
+
     private
 
     def derive_slug

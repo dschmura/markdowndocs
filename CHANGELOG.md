@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-02-21
+
+### Added
+
+- Opt-in full-text search for the documentation index page (`config.search_enabled = true`)
+- Pre-built JSON search index served from `/docs/search_index` endpoint
+- Instant search-as-you-type powered by vendored MiniSearch (~7KB gzipped)
+- Stimulus controller (`docs_search_controller`) with debounced input, fuzzy matching, and prefix search
+- Title matches boosted 3x, description matches boosted 2x for relevance ranking
+- Cards and category sections auto-hide/show based on search results
+- "No matching documents" empty state when search yields no results
+- `plain_text_content` method on `Documentation` model for stripped searchable text
+- Search index cached via `Rails.cache` with file-mtime-based invalidation
+
 ## [0.1.5] - 2026-02-20
 
 ### Changed
@@ -53,6 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - i18n support for all UI strings
 - Install generator (`rails generate markdowndocs:install`)
 
+[0.2.0]: https://github.com/dschmura/markdowndocs/releases/tag/v0.2.0
 [0.1.5]: https://github.com/dschmura/markdowndocs/releases/tag/v0.1.5
 [0.1.4]: https://github.com/dschmura/markdowndocs/releases/tag/v0.1.4
 [0.1.3]: https://github.com/dschmura/markdowndocs/releases/tag/v0.1.3

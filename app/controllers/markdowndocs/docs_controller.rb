@@ -10,6 +10,29 @@ module Markdowndocs
 
     def index
       @docs_by_category = Documentation.grouped_by_category
+      @search_enabled = Markdowndocs.config.search_enabled
+    end
+
+    def search_index
+      unless Markdowndocs.config.search_enabled
+        render_not_found
+        return
+      end
+
+      cache_key = "markdowndocs:search_index:#{Documentation.all.map(&:cache_key).join(",")}"
+      json = Rails.cache.fetch(cache_key, expires_in: Markdowndocs.config.cache_expiry) do
+        Documentation.all.map do |doc|
+          {
+            id: doc.slug,
+            title: doc.title,
+            description: doc.description,
+            content: doc.plain_text_content
+          }
+        end.to_json
+      end
+
+      response.headers["Cache-Control"] = "public, max-age=#{Markdowndocs.config.cache_expiry.to_i}"
+      render json: json
     end
 
     def show

@@ -24,6 +24,10 @@ Markdowndocs.configure do |config|
   # Cache expiry for rendered markdown (default: 1.hour)
   # config.cache_expiry = 1.hour
 
+  # Enable full-text search on the documentation index (default: false)
+  # Adds a search bar that filters docs by title, description, and content
+  # config.search_enabled = true
+
   # Optional: Resolve current user's mode preference from database
   # Return nil to fall back to cookie/default
   # config.user_mode_resolver = ->(controller) {
