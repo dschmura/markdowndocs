@@ -19,5 +19,14 @@ module Markdowndocs
         app.config.importmap.paths << root.join("config/importmap.rb")
       end
     end
+
+    initializer "markdowndocs.stimulus" do
+      Rails.application.config.after_initialize do
+        if defined?(Importmap)
+          # The pin is already added via importmap.rb
+          # Host app just needs: import "markdowndocs" in their application.js
+        end
+      end
+    end
   end
 end

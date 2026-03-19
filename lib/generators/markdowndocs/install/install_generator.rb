@@ -20,25 +20,18 @@ module Markdowndocs
         route 'mount Markdowndocs::Engine, at: "/docs"'
       end
 
-      def pin_importmap_assets
-        importmap_file = Rails.root.join("config/importmap.rb").to_s
-        return unless File.exist?(importmap_file)
+      def add_markdowndocs_import
+        js_file = Rails.root.join("app/javascript/application.js").to_s
+        return unless File.exist?(js_file)
 
-        importmap_content = File.read(importmap_file)
+        js_content = File.read(js_file)
+        import_line = 'import "markdowndocs"'
 
-        pins = {
-          'pin "markdowndocs/controllers/docs_search_controller", to: "markdowndocs/controllers/docs_search_controller.js"' => "docs_search_controller",
-          'pin "markdowndocs/controllers/docs_mode_controller", to: "markdowndocs/controllers/docs_mode_controller.js"' => "docs_mode_controller",
-          'pin "minisearch", to: "markdowndocs/vendor/minisearch.min.js"' => "minisearch"
-        }
-
-        pins.each do |pin_line, name|
-          if importmap_content.include?(pin_line)
-            say_status :skip, "importmap pin for #{name} already present", :yellow
-          else
-            append_to_file importmap_file, "\n#{pin_line}\n"
-            say_status :pin, name, :green
-          end
+        if js_content.include?(import_line)
+          say_status :skip, "markdowndocs import already present in application.js", :yellow
+        else
+          append_to_file js_file, "\n#{import_line}\n"
+          say_status :import, "markdowndocs in application.js", :green
         end
       end
 
@@ -76,10 +69,8 @@ module Markdowndocs
           say "    @source \"#{Markdowndocs::Engine.root.join("app", "views")}/**/*.erb\";"
           say ""
         end
-        say "  Stimulus controllers are auto-registered via importmap.", :green
-        say "  If you use a custom Stimulus setup, register these controllers:"
-        say "    - markdowndocs/controllers/docs_mode_controller"
-        say "    - markdowndocs/controllers/docs_search_controller (when search is enabled)"
+        say "  Stimulus controllers are auto-registered via: import \"markdowndocs\"", :green
+        say "  If this was not added automatically, add it to app/javascript/application.js"
         say ""
       end
 
