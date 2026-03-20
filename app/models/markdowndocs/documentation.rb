@@ -5,7 +5,7 @@ module Markdowndocs
   # Represents markdown documentation files from a configurable directory.
   # Handles metadata extraction, frontmatter parsing, and category associations.
   class Documentation
-    attr_reader :slug, :title, :description, :category, :file_path
+    attr_reader :slug, :title, :description, :category, :file_path, :keywords
 
     def initialize(file_path)
       @file_path = file_path
@@ -117,6 +117,7 @@ module Markdowndocs
 
       @title ||= slug.titleize
       @description ||= "Documentation for #{@title}"
+      @keywords = Array(parsed[:frontmatter]["keywords"])
     end
 
     def parse_frontmatter

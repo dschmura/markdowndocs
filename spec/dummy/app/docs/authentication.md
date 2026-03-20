@@ -1,6 +1,7 @@
 ---
 title: Authentication
 description: Authentication guide
+keywords: [login, signin, password, session]
 ---
 
 # Authentication

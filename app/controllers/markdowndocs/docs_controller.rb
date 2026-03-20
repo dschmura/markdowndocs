@@ -26,7 +26,8 @@ module Markdowndocs
             id: doc.slug,
             title: doc.title,
             description: doc.description,
-            content: doc.plain_text_content
+            content: doc.plain_text_content,
+            keywords: doc.keywords.join(" ")
           }
         end.to_json
       end

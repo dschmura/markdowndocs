@@ -90,6 +90,18 @@ RSpec.describe Markdowndocs::Documentation do
     end
   end
 
+  describe "#keywords" do
+    it "returns array from frontmatter" do
+      doc = described_class.find_by_slug("authentication")
+      expect(doc.keywords).to eq(%w[login signin password session])
+    end
+
+    it "returns empty array when not present" do
+      doc = described_class.find_by_slug("quickstart")
+      expect(doc.keywords).to eq([])
+    end
+  end
+
   describe "#cache_key" do
     it "includes slug and mtime" do
       doc = described_class.find_by_slug("welcome")

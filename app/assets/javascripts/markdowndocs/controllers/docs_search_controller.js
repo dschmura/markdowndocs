@@ -23,10 +23,10 @@ export default class extends Controller {
       const MiniSearch = (await this.loadMiniSearch()).default || (await this.loadMiniSearch())
 
       this.miniSearch = new MiniSearch({
-        fields: ["title", "description", "content"],
+        fields: ["title", "description", "content", "keywords"],
         storeFields: ["title", "description"],
         searchOptions: {
-          boost: { title: 3, description: 2 },
+          boost: { title: 3, description: 2, keywords: 4 },
           fuzzy: 0.2,
           prefix: true
         }
