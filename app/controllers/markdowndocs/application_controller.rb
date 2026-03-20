@@ -4,37 +4,19 @@ module Markdowndocs
   class ApplicationController < ::ApplicationController
     protect_from_forgery with: :exception
 
-    # Delegate unresolved route helpers to the host app via main_app.
-    # isolate_namespace blocks host helpers by default, and the commonly-used
-    # `helper Rails.application.routes.url_helpers` doesn't reliably win the
-    # method-lookup race — so host-app links like about_path can resolve
-    # against the engine's catch-all :slug route instead.  This delegation
-    # ensures host app route helpers always work correctly in engine views.
-    helper do
-      # Explicitly delegate root_path/root_url to the host app.
-      # The engine defines its own root route, so these helpers exist in the
-      # engine scope and method_missing won't intercept them — but they resolve
-      # to /docs/ instead of /. Engine views use markdowndocs.root_path directly.
-      def root_path(*args)
-        main_app.root_path(*args)
-      end
-
-      def root_url(*args)
-        main_app.root_url(*args)
-      end
-
-      def method_missing(method, *args, &block)
-        if main_app.respond_to?(method)
-          main_app.send(method, *args, &block)
-        else
-          super
-        end
-      end
-
-      def respond_to_missing?(method, include_private = false)
-        main_app.respond_to?(method, include_private) || super
-      end
-    end
+    # Fix route helper isolation caused by isolate_namespace.
+    #
+    # The problem: host app route helpers (about_path, contact_path, etc.)
+    # exist in the view context but resolve against the engine's namespace,
+    # so about_path returns "/docs/about" instead of "/about".
+    #
+    # method_missing doesn't help because the methods already exist —
+    # they just resolve wrong. We need to override them explicitly.
+    #
+    # This before_action builds a helper module on first request (when
+    # routes are fully loaded) that defines every host app route helper
+    # as a delegation to main_app.
+    before_action :ensure_host_route_helpers
 
     # Support Rails 8 built-in authentication (allow_unauthenticated_access)
     # without requiring it — works with any auth system or none at all
@@ -44,5 +26,21 @@ module Markdowndocs
 
     # Resume session if the host app supports it (Rails 8 auth)
     before_action :resume_session, if: -> { respond_to?(:resume_session, true) }
+
+    private
+
+    def ensure_host_route_helpers
+      return if self.class.instance_variable_get(:@host_routes_delegated)
+
+      helper_module = Module.new do
+        Rails.application.routes.named_routes.names.each do |name|
+          define_method(:"#{name}_path") { |*args, **kwargs| main_app.send(:"#{name}_path", *args, **kwargs) }
+          define_method(:"#{name}_url") { |*args, **kwargs| main_app.send(:"#{name}_url", *args, **kwargs) }
+        end
+      end
+
+      self.class.helper(helper_module)
+      self.class.instance_variable_set(:@host_routes_delegated, true)
+    end
   end
 end
