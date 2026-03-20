@@ -98,6 +98,13 @@ module Markdowndocs
       text.strip
     end
 
+    # Returns text extracted from fenced code blocks for search indexing.
+    def code_content
+      parsed = parse_frontmatter
+      blocks = parsed[:markdown].scan(/```\w*\n([\s\S]*?)```/)
+      blocks.flatten.join(" ").gsub(/\s+/, " ").strip
+    end
+
     private
 
     def derive_slug

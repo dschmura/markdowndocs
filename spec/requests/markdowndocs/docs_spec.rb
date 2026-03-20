@@ -83,7 +83,7 @@ RSpec.describe "Markdowndocs::Docs", type: :request do
         expect(slugs).to include("quickstart")
       end
 
-      it "includes title, description, content, and keywords fields" do
+      it "includes all search fields" do
         get "/docs/search_index"
         json = JSON.parse(response.body)
         doc = json.find { |d| d["id"] == "welcome" }
@@ -91,6 +91,14 @@ RSpec.describe "Markdowndocs::Docs", type: :request do
         expect(doc).to have_key("description")
         expect(doc).to have_key("content")
         expect(doc).to have_key("keywords")
+        expect(doc).to have_key("code")
+      end
+
+      it "includes code block content" do
+        get "/docs/search_index"
+        json = JSON.parse(response.body)
+        doc = json.find { |d| d["id"] == "quickstart" }
+        expect(doc["code"]).to include("markdowndocs")
       end
 
       it "includes keywords as space-separated string" do

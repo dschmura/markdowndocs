@@ -102,6 +102,20 @@ RSpec.describe Markdowndocs::Documentation do
     end
   end
 
+  describe "#code_content" do
+    it "extracts text from fenced code blocks" do
+      doc = described_class.find_by_slug("quickstart")
+      code = doc.code_content
+      expect(code).to include("gem \"markdowndocs\"")
+      expect(code).to include("Markdowndocs::Engine")
+    end
+
+    it "returns empty string when no code blocks exist" do
+      doc = described_class.find_by_slug("authentication")
+      expect(doc.code_content).to eq("")
+    end
+  end
+
   describe "#cache_key" do
     it "includes slug and mtime" do
       doc = described_class.find_by_slug("welcome")

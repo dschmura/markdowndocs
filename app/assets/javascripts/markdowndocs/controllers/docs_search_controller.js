@@ -23,10 +23,10 @@ export default class extends Controller {
       const MiniSearch = (await this.loadMiniSearch()).default || (await this.loadMiniSearch())
 
       this.miniSearch = new MiniSearch({
-        fields: ["title", "description", "content", "keywords"],
+        fields: ["title", "description", "content", "keywords", "code"],
         storeFields: ["title", "description"],
         searchOptions: {
-          boost: { title: 3, description: 2, keywords: 4 },
+          boost: { title: 3, description: 2, keywords: 4, code: 0.5 },
           fuzzy: 0.2,
           prefix: true
         }
@@ -58,7 +58,7 @@ export default class extends Controller {
 
   search() {
     if (this.debounceTimer) clearTimeout(this.debounceTimer)
-    this.debounceTimer = setTimeout(() => this.performSearch(), 150)
+    this.debounceTimer = setTimeout(() => this.performSearch(), 50)
   }
 
   performSearch() {
@@ -71,16 +71,21 @@ export default class extends Controller {
 
     const results = this.miniSearch.search(query)
     const matchingSlugs = new Set(results.map(r => r.id))
+    const scoreBySlug = new Map(results.map(r => [r.id, r.score]))
 
-    this.cardTargets.forEach(card => {
-      const slug = card.dataset.slug
-      card.classList.toggle("hidden", !matchingSlugs.has(slug))
-    })
-
+    // Reorder cards within each category by relevance score
     this.categoryTargets.forEach(section => {
-      const cards = section.querySelectorAll("[data-docs-search-target='card']")
-      const hasVisible = Array.from(cards).some(c => !c.classList.contains("hidden"))
-      section.classList.toggle("hidden", !hasVisible)
+      const cards = Array.from(section.querySelectorAll("[data-docs-search-target='card']"))
+      cards.forEach(card => {
+        const slug = card.dataset.slug
+        card.classList.toggle("hidden", !matchingSlugs.has(slug))
+      })
+
+      const visibleCards = cards.filter(c => !c.classList.contains("hidden"))
+      visibleCards.sort((a, b) => (scoreBySlug.get(b.dataset.slug) || 0) - (scoreBySlug.get(a.dataset.slug) || 0))
+      visibleCards.forEach(card => card.parentElement.appendChild(card))
+
+      section.classList.toggle("hidden", visibleCards.length === 0)
     })
 
     const hasResults = matchingSlugs.size > 0
@@ -91,7 +96,13 @@ export default class extends Controller {
 
   showAll() {
     this.cardTargets.forEach(card => card.classList.remove("hidden"))
-    this.categoryTargets.forEach(section => section.classList.remove("hidden"))
+    this.categoryTargets.forEach(section => {
+      section.classList.remove("hidden")
+      // Restore original order by slug
+      const cards = Array.from(section.querySelectorAll("[data-docs-search-target='card']"))
+      cards.sort((a, b) => a.dataset.slug.localeCompare(b.dataset.slug))
+      cards.forEach(card => card.parentElement.appendChild(card))
+    })
     if (this.hasNoResultsTarget) {
       this.noResultsTarget.classList.add("hidden")
     }
