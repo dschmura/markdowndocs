@@ -4,7 +4,8 @@ module Markdowndocs
   class Configuration
     attr_accessor :docs_path, :categories, :modes, :default_mode,
       :markdown_options, :rouge_theme, :cache_expiry,
-      :user_mode_resolver, :user_mode_saver, :search_enabled
+      :user_mode_resolver, :user_mode_saver, :search_enabled,
+      :layout
 
     def initialize
       @docs_path = nil # Resolved lazily so Rails.root is available
@@ -17,6 +18,7 @@ module Markdowndocs
       @user_mode_resolver = nil
       @user_mode_saver = nil
       @search_enabled = false
+      @layout = "markdowndocs/application"
     end
 
     # Lazily resolve docs_path so Rails.root is available
