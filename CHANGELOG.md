@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-03-20
+
+### Changed
+
+- Engine now uses its own layout instead of inheriting the host app's layout, eliminating route helper conflicts caused by `isolate_namespace`. Host apps can override at `app/views/layouts/markdowndocs/application.html.erb` or configure via `config.layout`.
+- Supports `content_for` blocks (`:docs_header`, `:docs_footer`, `:head`, `:title`) for customization.
+- Removed `ensure_host_route_helpers` `before_action` — no longer needed with isolated layout.
+
+## [0.3.1] - 2026-03-20
+
+### Changed
+
+- Fenced code block content is now indexed as a low-boost (0.5x) search field, making class names, methods, and config keys in examples discoverable.
+- Visible cards are now reordered by MiniSearch relevance score within each category.
+- Search debounce reduced from 150ms to 50ms for snappier results.
+
 ## [0.3.0] - 2026-03-20
 
 ### Added
@@ -96,6 +112,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - i18n support for all UI strings
 - Install generator (`rails generate markdowndocs:install`)
 
+[0.4.0]: https://github.com/dschmura/markdowndocs/releases/tag/v0.4.0
+[0.3.1]: https://github.com/dschmura/markdowndocs/releases/tag/v0.3.1
 [0.3.0]: https://github.com/dschmura/markdowndocs/releases/tag/v0.3.0
 [0.2.3]: https://github.com/dschmura/markdowndocs/releases/tag/v0.2.3
 [0.2.2]: https://github.com/dschmura/markdowndocs/releases/tag/v0.2.2
