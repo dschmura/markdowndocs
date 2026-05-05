@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-05-05
+
+### Added
+
+- Dark mode support across all docs templates. Every `bg-*`, `text-*`, and
+  `border-*` class now has a paired `dark:` variant chosen for WCAG 2.2 AAA
+  contrast (7:1) on dark surfaces. Host apps with `class="dark"` on `<html>`
+  (or `prefers-color-scheme: dark`) will see proper dark theming without
+  needing to override gem views.
+
+### Changed
+
+- Bumped indigo link colors from `text-indigo-600` to `text-indigo-700` (light)
+  and `text-indigo-300` (dark) so links pass AAA contrast on both surfaces.
+- Selected-state mode-switcher cyan text bumped from `text-cyan-700`/`-800` to
+  `text-cyan-900` (light) and `text-cyan-100` (dark) for AAA against the
+  selected card's `bg-cyan-50`/`bg-cyan-900/40` background.
+- `prose-indigo` content area now also applies `dark:prose-invert` so the
+  rendered Markdown body inverts cleanly in dark mode.
+
 ## [0.4.0] - 2026-03-20
 
 ### Changed
@@ -112,6 +132,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - i18n support for all UI strings
 - Install generator (`rails generate markdowndocs:install`)
 
+[0.5.0]: https://github.com/dschmura/markdowndocs/releases/tag/v0.5.0
 [0.4.0]: https://github.com/dschmura/markdowndocs/releases/tag/v0.4.0
 [0.3.1]: https://github.com/dschmura/markdowndocs/releases/tag/v0.3.1
 [0.3.0]: https://github.com/dschmura/markdowndocs/releases/tag/v0.3.0

@@ -7,21 +7,21 @@
   ]
 %>
 <nav aria-label="Breadcrumb" class="mb-6">
-  <ol class="flex items-center space-x-2 text-sm text-gray-600">
+  <ol class="flex items-center space-x-2 text-sm text-gray-700 dark:text-slate-300">
     <% breadcrumb_items.each_with_index do |item, index| %>
       <li class="flex items-center">
         <% if index > 0 %>
-          <svg class="w-4 h-4 mx-2 text-gray-700" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+          <svg class="w-4 h-4 mx-2 text-gray-700 dark:text-slate-300" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
             <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
           </svg>
         <% end %>
 
         <% if item[:current] %>
-          <span class="font-medium text-gray-900" aria-current="page"><%= item[:name] %></span>
+          <span class="font-medium text-gray-900 dark:text-slate-100" aria-current="page"><%= item[:name] %></span>
         <% elsif item[:path] %>
-          <%= link_to item[:name], item[:path], class: "hover:text-indigo-600 transition-colors" %>
+          <%= link_to item[:name], item[:path], class: "hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors" %>
         <% else %>
-          <span class="text-gray-700"><%= item[:name] %></span>
+          <span class="text-gray-700 dark:text-slate-300"><%= item[:name] %></span>
         <% end %>
       </li>
     <% end %>
