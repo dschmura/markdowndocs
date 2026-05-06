@@ -35,4 +35,22 @@ jobs:
         run: bundle exec rake build
 
       - name: Publish gem
-        run: gem push pkg/markdowndocs-*.gem
+        run: |
+          set -euo pipefail
+          GEM_FILE=$(ls pkg/markdowndocs-*.gem | head -n1)
+          VERSION=$(basename "$GEM_FILE" .gem | sed 's/^markdowndocs-//')
+          echo "Resolved gem version: ${VERSION}"
+
+          # Idempotency guard: rake release already pushes from a developer
+          # machine, so the version may exist on RubyGems by the time this
+          # tag-triggered workflow runs. Re-pushing returns a hard error
+          # ("Repushing of gem versions is not allowed"), which we don't
+          # want to fail the workflow over.
+          HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' \
+            "https://rubygems.org/api/v2/rubygems/markdowndocs/versions/${VERSION}.json")
+          if [ "${HTTP_CODE}" = "200" ]; then
+            echo "::notice::markdowndocs ${VERSION} already published on RubyGems — skipping push"
+            exit 0
+          fi
+
+          gem push "${GEM_FILE}"
