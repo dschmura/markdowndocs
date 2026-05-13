@@ -1,6 +1,11 @@
 <%# locals: (current_mode:, available_modes:) %>
+<%# No `id=` on the root: show.html.erb renders _navigation twice (mobile +
+    desktop sidebars), which embeds this partial twice — a hardcoded id
+    would produce duplicate ids in the DOM (WCAG 4.1.1 violation, see
+    issue #20). Stimulus already scopes itself via data-controller, which
+    can appear N times without colliding. Tests / selectors should target
+    [data-controller="docs-mode"] rather than #docs-mode-switcher. %>
 <div
-  id="docs-mode-switcher"
   class="
     bg-white
     dark:bg-slate-800

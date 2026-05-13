@@ -104,10 +104,10 @@ module Markdowndocs
         parsed = parse_frontmatter
         raw = parsed[:frontmatter]["audience"]
         case raw
-        when Array  then raw.map(&:to_s)
-        when String then [ raw ]
-        when nil    then Markdowndocs.config.modes.dup
-        else             Markdowndocs.config.modes.dup
+        when Array then raw.map(&:to_s)
+        when String then [raw]
+        when nil then Markdowndocs.config.modes.dup
+        else Markdowndocs.config.modes.dup
         end
       end
     end
