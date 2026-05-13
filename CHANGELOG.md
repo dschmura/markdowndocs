@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-05-13
+
+### Added
+
+- `audience:` frontmatter key on individual docs. Accepts a single string
+  or an array of mode names (e.g. `audience: technical`, or
+  `audience: [guide, technical]`). When the current mode does not appear
+  in a doc's audience, the doc is hidden from the index and unreachable
+  via slug (returns 404). Docs WITHOUT an `audience:` key remain visible
+  in every mode — fully backward compatible with pre-0.6 docs.
+- `Documentation#audience` returns the resolved audience as `Array<String>`.
+- `Documentation#visible_to?(mode)` predicate. `nil` mode means no filter.
+- `Documentation.find_by_slug(slug, mode: nil)` and
+  `Documentation.grouped_by_category(mode: nil)` both accept an optional
+  `mode:` kwarg. Default behavior (no kwarg) is unchanged — backward
+  compatible signature.
+
+### Changed
+
+- `Documentation.grouped_by_category` now drops empty categories when a
+  `mode:` filter is applied — categories whose docs are all hidden by the
+  current audience no longer render as empty headers.
+- `Markdowndocs::DocsController#index` and `#show` pass the resolved
+  `@docs_mode` through to `Documentation` so the index reflects the
+  user's mode pick. URL guessing / shared links to wrong-audience docs
+  now return 404.
+
+### Migration notes
+
+- No action required if you don't use modes. Existing docs continue to
+  appear in both `guide` and `technical` modes.
+- To restrict a doc to a specific audience, add `audience: technical`
+  (or `audience: guide`) to its frontmatter.
+- To make a doc explicitly multi-audience, use `audience: [guide, technical]`.
+
 ## [0.5.0] - 2026-05-05
 
 ### Added

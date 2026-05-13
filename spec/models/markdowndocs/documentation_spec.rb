@@ -50,6 +50,92 @@ RSpec.describe Markdowndocs::Documentation do
       expect(grouped["Getting Started"].map(&:slug)).to include("welcome", "quickstart")
       expect(grouped["Guides"].map(&:slug)).to include("authentication")
     end
+
+    # Audience filtering: docs declare `audience:` in their frontmatter.
+    # When the controller passes a mode, the grouped result hides any doc
+    # whose audience excludes that mode. Docs WITHOUT an `audience:` key
+    # default to "visible in all modes" — backward compatible.
+    context "with a mode: argument" do
+      it "hides docs whose audience excludes the given mode (technical-only doc disappears in guide mode)" do
+        grouped = described_class.grouped_by_category(mode: "guide")
+        slugs = grouped.values.flatten.map(&:slug)
+        expect(slugs).to include("welcome", "quickstart", "authentication")
+        expect(slugs).not_to include("admin-reference")
+      end
+
+      it "shows technical-only docs in technical mode" do
+        grouped = described_class.grouped_by_category(mode: "technical")
+        slugs = grouped.values.flatten.map(&:slug)
+        expect(slugs).to include("admin-reference")
+      end
+
+      it "shows multi-audience docs in either mode" do
+        # welcome.md declares `audience: [guide, technical]`.
+        expect(described_class.grouped_by_category(mode: "guide").values.flatten.map(&:slug)).to include("welcome")
+        expect(described_class.grouped_by_category(mode: "technical").values.flatten.map(&:slug)).to include("welcome")
+      end
+
+      it "shows docs WITHOUT audience frontmatter in every mode (backward compat)" do
+        # quickstart.md and authentication.md have no `audience:` key.
+        guide_slugs = described_class.grouped_by_category(mode: "guide").values.flatten.map(&:slug)
+        technical_slugs = described_class.grouped_by_category(mode: "technical").values.flatten.map(&:slug)
+        expect(guide_slugs).to include("quickstart", "authentication")
+        expect(technical_slugs).to include("quickstart", "authentication")
+      end
+
+      it "drops empty categories when no docs match the mode" do
+        # "Administrator Reference" holds only `admin-reference` (technical).
+        # In guide mode the category itself should disappear, not surface as
+        # an empty header.
+        grouped = described_class.grouped_by_category(mode: "guide")
+        expect(grouped.keys).not_to include("Administrator Reference")
+      end
+    end
+
+    it "behaves identically when mode is nil (no filter)" do
+      unfiltered = described_class.grouped_by_category.values.flatten.map(&:slug).sort
+      explicitly_nil = described_class.grouped_by_category(mode: nil).values.flatten.map(&:slug).sort
+      expect(unfiltered).to eq(explicitly_nil)
+    end
+  end
+
+  describe "#audience" do
+    it "returns the array from frontmatter when present" do
+      doc = described_class.find_by_slug("welcome")
+      expect(doc.audience).to eq(%w[guide technical])
+    end
+
+    it "coerces a single string value into a single-element array" do
+      doc = described_class.find_by_slug("admin-reference")
+      expect(doc.audience).to eq(%w[technical])
+    end
+
+    it "defaults to ALL configured modes when frontmatter has no audience key" do
+      doc = described_class.find_by_slug("quickstart")
+      expect(doc.audience).to eq(Markdowndocs.config.modes)
+    end
+  end
+
+  describe "#visible_to?(mode)" do
+    it "is true when audience includes the mode" do
+      expect(described_class.find_by_slug("admin-reference").visible_to?("technical")).to be true
+      expect(described_class.find_by_slug("welcome").visible_to?("guide")).to be true
+      expect(described_class.find_by_slug("welcome").visible_to?("technical")).to be true
+    end
+
+    it "is false when audience excludes the mode" do
+      expect(described_class.find_by_slug("admin-reference").visible_to?("guide")).to be false
+    end
+
+    it "is true for any mode when audience is unset (backward compat)" do
+      doc = described_class.find_by_slug("quickstart")
+      expect(doc.visible_to?("guide")).to be true
+      expect(doc.visible_to?("technical")).to be true
+    end
+
+    it "is true when mode is nil (no filter)" do
+      expect(described_class.find_by_slug("admin-reference").visible_to?(nil)).to be true
+    end
   end
 
   describe "#title" do

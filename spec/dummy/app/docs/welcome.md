@@ -1,6 +1,9 @@
 ---
 title: Welcome
 description: Welcome to the documentation
+audience:
+  - guide
+  - technical
 modes:
   - guide
   - technical

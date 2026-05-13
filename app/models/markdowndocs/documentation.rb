@@ -23,14 +23,21 @@ module Markdowndocs
       end.sort_by(&:slug)
     end
 
-    def self.find_by_slug(slug)
+    # When `mode:` is given (e.g. "guide" / "technical"), returns nil if
+    # the resolved doc's `audience:` frontmatter excludes that mode. Docs
+    # without an explicit `audience:` key default to "visible in all modes"
+    # — backward compatible with pre-0.6 docs.
+    def self.find_by_slug(slug, mode: nil)
       return nil if slug.blank?
       return nil if slug.include?("..") || slug.include?("/")
 
       file_path = Markdowndocs.config.resolved_docs_path.join("#{slug}.md")
       return nil unless file_path.exist?
 
-      new(file_path)
+      doc = new(file_path)
+      return nil unless doc.visible_to?(mode)
+
+      doc
     rescue => e
       Rails.logger.error("Error finding documentation by slug '#{slug}': #{e.message}")
       nil
@@ -40,9 +47,13 @@ module Markdowndocs
       all.select { |doc| doc.category == category }
     end
 
-    def self.grouped_by_category
+    # When `mode:` is given, filters out docs whose `audience:` excludes
+    # that mode AND drops categories that end up empty (so the index
+    # sidebar doesn't render headers with no children).
+    def self.grouped_by_category(mode: nil)
       Markdowndocs.config.categories.each_with_object({}) do |(category, slugs), hash|
-        hash[category] = slugs.map { |slug| find_by_slug(slug) }.compact
+        docs = slugs.map { |slug| find_by_slug(slug, mode: mode) }.compact
+        hash[category] = docs unless docs.empty?
       end
     end
 
@@ -81,6 +92,32 @@ module Markdowndocs
 
     def supports_mode?(mode)
       available_modes.include?(mode.to_s)
+    end
+
+    # The audience(s) this doc is written for, declared via `audience:`
+    # frontmatter. Accepts a single string or an array; both are coerced
+    # to an Array<String>. When the frontmatter key is missing, defaults
+    # to all configured modes — a doc with no audience declaration is
+    # visible in every mode (backward compat with pre-0.6 docs).
+    def audience
+      @audience ||= begin
+        parsed = parse_frontmatter
+        raw = parsed[:frontmatter]["audience"]
+        case raw
+        when Array  then raw.map(&:to_s)
+        when String then [ raw ]
+        when nil    then Markdowndocs.config.modes.dup
+        else             Markdowndocs.config.modes.dup
+        end
+      end
+    end
+
+    # Whether this doc should be surfaced to a viewer in the given mode.
+    # `nil` mode is treated as "no filter" — useful for callers that
+    # don't care about audience (search indexer, admin tools).
+    def visible_to?(mode)
+      return true if mode.nil?
+      audience.include?(mode.to_s)
     end
 
     # Returns content stripped of frontmatter, markdown syntax, and HTML tags
