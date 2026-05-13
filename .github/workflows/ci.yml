@@ -25,6 +25,9 @@ jobs:
           ruby-version: ${{ matrix.ruby-version }}
           bundler-cache: true
 
+      - name: Disable Bundler frozen lock
+        run: bundle config set frozen false
+
       - name: Run tests
         run: bundle exec rspec
 
