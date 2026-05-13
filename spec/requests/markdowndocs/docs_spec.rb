@@ -53,6 +53,22 @@ RSpec.describe "Markdowndocs::Docs", type: :request do
       expect(response.body).to include("step-by-step")
       expect(response.body).not_to include("gem install")
     end
+
+    # Issue #20 (WCAG 4.1.1): show.html.erb renders _navigation twice (mobile +
+    # desktop sidebars), which embeds _mode_switcher twice. The switcher must
+    # not declare a hardcoded id — Stimulus already scopes itself via
+    # data-controller="docs-mode", which can appear N times without colliding.
+    it "does not emit duplicate id=\"docs-mode-switcher\" in the rendered HTML" do
+      get "/docs/welcome"
+      duplicate_count = response.body.scan(/id="docs-mode-switcher"/).length
+      expect(duplicate_count).to eq(0),
+        "show page must not emit any id=\"docs-mode-switcher\" — Stimulus's data-controller is the unique-scoping mechanism, and the partial renders twice (mobile + desktop sidebars)"
+
+      # Sanity: the switcher IS in the DOM, just identified by data-controller.
+      controller_count = response.body.scan(/data-controller="docs-mode"/).length
+      expect(controller_count).to eq(2),
+        "expected two docs-mode controller instances (mobile + desktop sidebars)"
+    end
   end
 
   describe "GET /docs/search_index" do

@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2026-05-13
+
+### Fixed
+
+- **Duplicate `id="docs-mode-switcher"` in the DOM** (issue #20). The
+  show layout renders `_navigation` (and therefore the mode switcher)
+  twice — once for the mobile sidebar, once for the desktop sidebar.
+  The hardcoded id on `_mode_switcher.html.erb` produced two elements
+  with the same id on every doc show page, a WCAG 4.1.1 violation.
+
+  Dropped the `id=` from the partial entirely. Stimulus already scopes
+  the controller via `data-controller="docs-mode"`, which can appear
+  N times in a document without colliding.
+
+  Host apps / tests / custom CSS selecting via `#docs-mode-switcher`
+  should switch to `[data-controller="docs-mode"]`. Note: any host app
+  relying on that id was already in a broken state (duplicate ids in
+  the DOM); this fix surfaces the issue rather than creating it.
+
+### Migration notes
+
+- If you have a CSS rule like `#docs-mode-switcher { ... }`, change it
+  to `[data-controller="docs-mode"] { ... }`.
+- If you have a Capybara test using `within "#docs-mode-switcher"`,
+  change it to `within first("[data-controller='docs-mode']")` (or
+  similar — the partial may render twice depending on your layout).
+
 ## [0.6.0] - 2026-05-13
 
 ### Added
