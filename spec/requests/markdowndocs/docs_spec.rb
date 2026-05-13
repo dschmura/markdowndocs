@@ -122,4 +122,58 @@ RSpec.describe "Markdowndocs::Docs", type: :request do
       expect(response).to have_http_status(:unprocessable_entity)
     end
   end
+
+  # Audience-frontmatter filtering: docs declare `audience:` in their
+  # frontmatter and the controller honors it via Documentation's mode:
+  # kwarg on both .grouped_by_category (index) and .find_by_slug (show).
+  describe "audience filtering" do
+    describe "GET /docs?mode=guide" do
+      it "hides technical-only docs from the index" do
+        get "/docs", params: {mode: "guide"}
+        expect(response.body).not_to include("Admin Reference")
+      end
+
+      it "drops empty categories from the index" do
+        get "/docs", params: {mode: "guide"}
+        expect(response.body).not_to include("Administrator Reference")
+      end
+    end
+
+    describe "GET /docs?mode=technical" do
+      it "shows technical-only docs in the index" do
+        get "/docs", params: {mode: "technical"}
+        expect(response.body).to include("Admin Reference")
+      end
+    end
+
+    describe "GET /docs/:slug honors the audience filter" do
+      it "404s a technical-only doc when mode is guide" do
+        get "/docs/admin-reference", params: {mode: "guide"}
+        expect(response).to have_http_status(:not_found)
+      end
+
+      it "renders a technical-only doc when mode is technical" do
+        get "/docs/admin-reference", params: {mode: "technical"}
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("Admin Reference")
+      end
+
+      it "renders a multi-audience doc in either mode" do
+        get "/docs/welcome", params: {mode: "guide"}
+        expect(response).to have_http_status(:ok)
+
+        get "/docs/welcome", params: {mode: "technical"}
+        expect(response).to have_http_status(:ok)
+      end
+
+      it "renders an audience-unset doc in either mode (backward compat)" do
+        # quickstart.md has no `audience:` key.
+        get "/docs/quickstart", params: {mode: "guide"}
+        expect(response).to have_http_status(:ok)
+
+        get "/docs/quickstart", params: {mode: "technical"}
+        expect(response).to have_http_status(:ok)
+      end
+    end
+  end
 end

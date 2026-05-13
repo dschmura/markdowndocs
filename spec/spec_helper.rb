@@ -17,7 +17,8 @@ RSpec.configure do |config|
     Markdowndocs.configure do |c|
       c.categories = {
         "Getting Started" => %w[welcome quickstart],
-        "Guides" => %w[authentication]
+        "Guides" => %w[authentication],
+        "Administrator Reference" => %w[admin-reference]
       }
     end
   end
@@ -27,7 +28,8 @@ RSpec.configure do |config|
     Markdowndocs.configure do |c|
       c.categories = {
         "Getting Started" => %w[welcome quickstart],
-        "Guides" => %w[authentication]
+        "Guides" => %w[authentication],
+        "Administrator Reference" => %w[admin-reference]
       }
     end
   end

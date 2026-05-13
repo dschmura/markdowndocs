@@ -9,7 +9,10 @@ module Markdowndocs
     SAFE_SLUG_PATTERN = /\A[a-zA-Z0-9_-]+\z/
 
     def index
-      @docs_by_category = Documentation.grouped_by_category
+      # Pass the resolved mode so docs whose `audience:` frontmatter
+      # excludes it are hidden from the index. Categories with no
+      # surviving docs are dropped (see Documentation.grouped_by_category).
+      @docs_by_category = Documentation.grouped_by_category(mode: @docs_mode)
       @search_enabled = Markdowndocs.config.search_enabled
     end
 
@@ -38,7 +41,12 @@ module Markdowndocs
     end
 
     def show
-      @doc = Documentation.find_by_slug(params[:slug])
+      # Audience filter: a doc with `audience: technical` is unreachable
+      # via slug while the user is in guide mode — they get the 404 page,
+      # not the doc's content. This matters because the index already
+      # hides those docs; making the show route honor the same filter
+      # keeps URL guessing / shared-link scenarios consistent.
+      @doc = Documentation.find_by_slug(params[:slug], mode: @docs_mode)
 
       if @doc.nil?
         render_not_found

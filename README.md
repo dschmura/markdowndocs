@@ -108,6 +108,9 @@ Add optional YAML front matter to set metadata:
 ---
 title: "Quick Start Guide"
 description: "Get up and running in five minutes"
+audience:
+  - guide
+  - technical
 modes:
   - guide
   - technical
@@ -120,6 +123,24 @@ Your content here...
 ```
 
 If front matter is omitted, the title is extracted from the first H1 heading and the description from the first paragraph.
+
+### Audience Filtering (whole-document)
+
+For content that's split into separate files per audience (a user guide
+and a deep-dive technical reference, for example), use the `audience:`
+key in front matter to declare who a doc is for:
+
+```yaml
+audience: technical          # single-audience: shown only when mode=technical
+audience: [guide, technical] # multi-audience: shown in either mode
+# omit `audience:`           # backward-compatible: shown in every mode
+```
+
+When the current mode does not appear in a doc's audience, the doc is
+hidden from the index AND unreachable via slug (404). This complements
+the in-page `<!-- mode: -->` blocks below: use mode blocks when one doc
+mixes audience-specific snippets; use `audience:` when whole docs are
+audience-specific.
 
 ### Mode Blocks
 

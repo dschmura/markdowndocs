@@ -3,6 +3,7 @@
 Markdowndocs.configure do |config|
   config.categories = {
     "Getting Started" => %w[welcome quickstart],
-    "Guides" => %w[authentication]
+    "Guides" => %w[authentication],
+    "Administrator Reference" => %w[admin-reference]
   }
 end
