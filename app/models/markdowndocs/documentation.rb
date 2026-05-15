@@ -134,11 +134,10 @@ module Markdowndocs
       available_modes.include?(mode.to_s)
     end
 
-    # The audience(s) this doc is written for, declared via `audience:`
-    # frontmatter. Accepts a single string or an array; both are coerced
-    # to an Array<String>. When the frontmatter key is missing, defaults
-    # to all configured modes — a doc with no audience declaration is
-    # visible in every mode (backward compat with pre-0.6 docs).
+    # The audience(s) this doc is written for. Resolution order:
+    #   1. `audience:` frontmatter (DEPRECATED in 0.7.0, removed in 1.0.0)
+    #   2. Parent directory name when it matches a configured mode
+    #   3. All configured modes (root file with no override — visible everywhere)
     def audience
       @audience ||= begin
         parsed = parse_frontmatter
@@ -146,7 +145,9 @@ module Markdowndocs
         case raw
         when Array then raw.map(&:to_s)
         when String then [raw]
-        when nil then Markdowndocs.config.modes.dup
+        when nil
+          scope = audience_from_path
+          scope ? [scope] : Markdowndocs.config.modes.dup
         else Markdowndocs.config.modes.dup
         end
       end
@@ -192,6 +193,11 @@ module Markdowndocs
       docs_root = Markdowndocs.config.resolved_docs_path
       relative = file_path.relative_path_from(docs_root)
       relative.sub_ext("").to_s
+    end
+
+    def audience_from_path
+      dir = file_path.dirname.basename.to_s
+      Markdowndocs.config.modes.include?(dir) ? dir : nil
     end
 
     def extract_metadata

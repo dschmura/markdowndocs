@@ -185,6 +185,39 @@ RSpec.describe Markdowndocs::Documentation do
     end
   end
 
+  describe "#audience (path-based)" do
+    it "returns all configured modes for a root file with no frontmatter audience" do
+      doc = described_class.find_by_slug("billing")
+      expect(doc.audience).to match_array(Markdowndocs.config.modes)
+    end
+
+    it "returns a single-element array of the subdirectory name for a mode-scoped file" do
+      doc = described_class.all.find { |d| d.path_slug == "technical/architecture" }
+      expect(doc).not_to be_nil
+      expect(doc.audience).to eq(["technical"])
+    end
+
+    it "lets `audience:` frontmatter override the path-derived value (backward compat)" do
+      # admin-reference.md is at the root with `audience: technical` in frontmatter.
+      doc = described_class.all.find { |d| d.slug == "admin-reference" }
+      expect(doc.audience).to eq(["technical"])
+    end
+  end
+
+  describe "#visible_to? (path-based)" do
+    it "returns true for a root file in any configured mode" do
+      doc = described_class.find_by_slug("billing")
+      expect(doc.visible_to?("guide")).to be true
+      expect(doc.visible_to?("technical")).to be true
+    end
+
+    it "returns false for a mode-scoped file in a non-matching mode" do
+      doc = described_class.all.find { |d| d.path_slug == "technical/architecture" }
+      expect(doc.visible_to?("guide")).to be false
+      expect(doc.visible_to?("technical")).to be true
+    end
+  end
+
   describe "#title" do
     it "extracts title from frontmatter" do
       doc = described_class.find_by_slug("welcome")
