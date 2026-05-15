@@ -4,10 +4,10 @@ require "spec_helper"
 
 RSpec.describe Markdowndocs::Documentation do
   describe ".all" do
-    it "returns all documentation files sorted by slug" do
+    it "returns all documentation files sorted by path_slug" do
       docs = described_class.all
       expect(docs).to be_an(Array)
-      expect(docs.map(&:slug)).to eq(docs.map(&:slug).sort)
+      expect(docs.map(&:path_slug)).to eq(docs.map(&:path_slug).sort)
     end
 
     it "returns Documentation instances" do
@@ -18,6 +18,53 @@ RSpec.describe Markdowndocs::Documentation do
     it "returns empty array when docs path does not exist" do
       Markdowndocs.config.docs_path = Rails.root.join("nonexistent")
       expect(described_class.all).to eq([])
+    end
+
+    context "with files in mode-named subdirectories" do
+      it "discovers files in subdirectories whose name matches a configured mode" do
+        slugs = described_class.all.map(&:slug)
+        expect(slugs).to include("architecture", "billing")
+        # `billing` appears twice: docs/billing.md AND docs/technical/billing.md.
+        # We use path_slug in later tests to distinguish them.
+      end
+
+      it "exposes the path relative to the docs root via #path_slug" do
+        path_slugs = described_class.all.map(&:path_slug)
+        expect(path_slugs).to include("billing")
+        expect(path_slugs).to include("technical/architecture")
+        expect(path_slugs).to include("technical/billing")
+      end
+
+      it "ignores subdirectories whose name is not in config.modes" do
+        Dir.mktmpdir do |tmp|
+          docs = Pathname.new(tmp)
+          docs.join("root.md").write("# Root\n")
+          docs.join("api").mkpath
+          docs.join("api", "ignored.md").write("# Ignored\n")
+          docs.join("technical").mkpath
+          docs.join("technical", "kept.md").write("# Kept\n")
+
+          Markdowndocs.config.docs_path = docs
+          slugs = described_class.all.map(&:slug)
+
+          expect(slugs).to include("root", "kept")
+          expect(slugs).not_to include("ignored")
+        end
+      end
+
+      it "logs a warning the first time a non-mode subdirectory is encountered" do
+        Dir.mktmpdir do |tmp|
+          docs = Pathname.new(tmp)
+          docs.join("api").mkpath
+          docs.join("api", "ignored.md").write("# Ignored\n")
+
+          Markdowndocs.config.docs_path = docs
+
+          expect(Rails.logger).to receive(:warn).with(/Ignoring subdirectory.*api/).once
+
+          2.times { described_class.all }
+        end
+      end
     end
   end
 

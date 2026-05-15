@@ -5,11 +5,12 @@ module Markdowndocs
   # Represents markdown documentation files from a configurable directory.
   # Handles metadata extraction, frontmatter parsing, and category associations.
   class Documentation
-    attr_reader :slug, :title, :description, :category, :file_path, :keywords
+    attr_reader :slug, :path_slug, :title, :description, :category, :file_path, :keywords
 
     def initialize(file_path)
       @file_path = file_path
       @slug = derive_slug
+      @path_slug = derive_path_slug
       extract_metadata
       @category = assign_category
     end
@@ -18,10 +19,49 @@ module Markdowndocs
       docs_path = Markdowndocs.config.resolved_docs_path
       return [] unless docs_path.exist?
 
-      Dir.glob(docs_path.join("*.md")).map do |file|
-        new(Pathname.new(file))
-      end.sort_by(&:slug)
+      files = Dir.glob(docs_path.join("*.md"))
+
+      modes = Markdowndocs.config.modes
+      modes.each do |mode|
+        mode_dir = docs_path.join(mode)
+        files.concat(Dir.glob(mode_dir.join("*.md"))) if mode_dir.exist?
+      end
+
+      warn_about_non_mode_subdirectories(docs_path, modes)
+
+      files.map { |f| new(Pathname.new(f)) }.sort_by(&:path_slug)
     end
+
+    # Emits a one-shot warning per process boot for each first-level
+    # subdirectory under docs_path that isn't a configured mode. Files
+    # inside such subdirectories are silently dropped by discovery —
+    # the warning makes that visible.
+    def self.warn_about_non_mode_subdirectories(docs_path, modes)
+      warned = Markdowndocs.config.non_mode_subdirs_warned
+
+      children = begin
+        docs_path.children
+      rescue Errno::ENOENT, Errno::EACCES => e
+        Rails.logger.warn("[Markdowndocs] Could not scan for non-mode subdirectories: #{e.message}")
+        return
+      end
+
+      children.each do |child|
+        next unless child.directory?
+        name = child.basename.to_s
+        next if modes.include?(name)
+        next if warned.include?(name)
+
+        warned << name
+        Rails.logger.warn(
+          "[Markdowndocs] Ignoring subdirectory #{child}/ — name does not match " \
+          "any configured mode (config.modes = #{modes.inspect}). Files inside " \
+          "this subdirectory will not be discovered. Move them into #{docs_path}/ " \
+          "or into a mode-named subdirectory."
+        )
+      end
+    end
+    private_class_method :warn_about_non_mode_subdirectories
 
     # When `mode:` is given (e.g. "guide" / "technical"), returns nil if
     # the resolved doc's `audience:` frontmatter excludes that mode. Docs
@@ -146,6 +186,12 @@ module Markdowndocs
 
     def derive_slug
       file_path.basename(".md").to_s
+    end
+
+    def derive_path_slug
+      docs_root = Markdowndocs.config.resolved_docs_path
+      relative = file_path.relative_path_from(docs_root)
+      relative.sub_ext("").to_s
     end
 
     def extract_metadata
