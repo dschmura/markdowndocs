@@ -55,8 +55,8 @@ Markdowndocs.configure do |config|
   # Category → slug mapping
   config.categories = {
     "Getting Started" => %w[welcome quickstart],
-    "Guides" => %w[authentication deployment],
-    "Reference" => %w[api-reference configuration]
+    "Guides" => %w[authentication billing],
+    "Architecture" => %w[technical/architecture technical/billing]
   }
 
   # Available documentation modes (default: %w[guide technical])
@@ -82,6 +82,11 @@ Markdowndocs.configure do |config|
   # }
 end
 ```
+
+> Bare slugs (e.g., `"welcome"`) match files at the docs root.
+> Path-prefixed slugs (e.g., `"technical/architecture"`) match files
+> inside the named mode subdirectory. The prefix segment must match
+> an entry in `config.modes`.
 
 ### Configuration Options
 
@@ -124,23 +129,43 @@ Your content here...
 
 If front matter is omitted, the title is extracted from the first H1 heading and the description from the first paragraph.
 
-### Audience Filtering (whole-document)
+### Audience Filtering by Filesystem Path
 
-For content that's split into separate files per audience (a user guide
-and a deep-dive technical reference, for example), use the `audience:`
-key in front matter to declare who a doc is for:
+The recommended way to scope a whole document to a single audience is to
+place it inside a subdirectory whose name matches an entry in
+`config.modes`. Files at the docs root are *shared* — visible in every
+mode.
 
-```yaml
-audience: technical          # single-audience: shown only when mode=technical
-audience: [guide, technical] # multi-audience: shown in either mode
-# omit `audience:`           # backward-compatible: shown in every mode
+```text
+app/docs/
+├── getting_started.md         → shared, visible in every mode
+├── billing.md                 → shared
+└── technical/
+    ├── architecture.md        → technical mode only
+    └── billing.md             → technical mode only
 ```
 
-When the current mode does not appear in a doc's audience, the doc is
-hidden from the index AND unreachable via slug (404). This complements
-the in-page `<!-- mode: -->` blocks below: use mode blocks when one doc
-mixes audience-specific snippets; use `audience:` when whole docs are
-audience-specific.
+URLs follow the filesystem layout: `app/docs/billing.md` is served at
+`/docs/billing`; `app/docs/technical/billing.md` is served at
+`/docs/technical/billing`. Both URLs are stable and shareable.
+
+Subdirectories whose name does not match a configured mode are ignored
+by document discovery, with a one-line warning at boot.
+
+### Audience Filtering by Frontmatter (deprecated)
+
+The `audience:` frontmatter key from v0.6.0 still works in v0.7.x but is
+deprecated. A warning is logged the first time each affected file is
+read. Move the file into the matching mode subdirectory and remove the
+`audience:` key. See the migration guide below.
+
+```yaml
+audience: technical          # deprecated — move to app/docs/technical/
+audience: [guide, technical] # deprecated — keep at root, drop the key
+# omit `audience:`           # still works for shared docs at root
+```
+
+The `audience:` key is scheduled for removal in v1.0.0.
 
 ### Mode Blocks
 
@@ -302,6 +327,57 @@ bundle exec rspec
    ```
 
    Pushing the tag triggers the GitHub Actions release workflow, which builds and publishes the gem to RubyGems automatically.
+
+## Migrating from v0.6.x to v0.7.0
+
+**URL stability.** Every URL from v0.6.x continues to resolve. Hosts
+that upgrade without moving files see zero URL changes. Path-based
+routing only introduces *new* URLs (`/docs/<mode>/<slug>`) when you
+explicitly relocate files into mode subdirectories.
+
+### If you don't use `audience:` today
+
+No action required. Adopt the new convention at your leisure.
+
+### If you use `audience: <single-mode>`
+
+For each affected doc:
+
+```diff
+- app/docs/foo.md
+- ---
+- audience: technical
+- ---
++ app/docs/technical/foo.md
++ (no `audience:` key)
+```
+
+The deprecation warning surfaces the suggested target path.
+
+### If you use `audience: [guide, technical]`
+
+The doc is multi-audience — drop the key, the root file is shared:
+
+```diff
+  app/docs/foo.md
+- ---
+- audience: [guide, technical]
+- ---
++ (no `audience:` key)
+```
+
+### `config.categories` for mode-scoped docs
+
+Prefix slugs with the mode subdirectory:
+
+```diff
+  config.categories = {
+-   "Architecture" => %w[architecture data_model]
++   "Architecture" => %w[technical/architecture data_model]
+  }
+```
+
+Bare slugs continue to mean "the doc at the root with this name."
 
 ## Contributing
 
