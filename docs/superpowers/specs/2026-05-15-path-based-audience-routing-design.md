@@ -185,10 +185,10 @@ Path-based routing adds a new shape: `/docs/<mode>/:slug` where `<mode>` is one 
 `Markdowndocs::Documentation` (in [app/models/markdowndocs/documentation.rb](../../../app/models/markdowndocs/documentation.rb), to be edited) gains the following:
 
 - **File discovery** walks `app/docs/*.md` (root) and `app/docs/<mode>/*.md` (for each mode in `config.modes`). Each Documentation instance is tagged with its source path; the audience is derived from the first path segment under `app/docs/`.
-- **`Documentation#audience`** returns `Array<String> | nil`. The return type stays compatible with v0.6.x:
-  - `nil` for shared docs at root with no `audience:` frontmatter — visible everywhere.
+- **`Documentation#audience`** returns `Array<String>` (matches v0.6.x contract — never nil):
+  - `Markdowndocs.config.modes.dup` for shared docs at root with no `audience:` frontmatter — visible everywhere. Observationally identical to v0.6.x.
   - `["technical"]` (single-element array) for a file at `app/docs/technical/foo.md` with no frontmatter — visible only in technical mode.
-  - `Array<String>` from `audience:` frontmatter when present — frontmatter wins for backward compat, AND emits the deprecation warning. (Mixing path-scoping with `audience:` frontmatter is an unusual combination but not an error.)
+  - The value from `audience:` frontmatter when present — frontmatter wins for backward compat, AND emits the deprecation warning. (Mixing path-scoping with `audience:` frontmatter is an unusual combination but not an error.)
 - **`Documentation#visible_to?(mode)`** unchanged in signature, updated semantics: `nil` audience → always visible; otherwise `audience.include?(mode)`.
 - **`Documentation.find_by_slug(slug, mode: nil)`** resolves to:
   - `app/docs/<mode>/<slug>.md` if `mode` is non-nil AND the file exists in that subdirectory; OR
