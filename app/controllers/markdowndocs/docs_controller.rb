@@ -41,18 +41,22 @@ module Markdowndocs
     end
 
     def show
-      # Audience filter: a doc with `audience: technical` is unreachable
-      # via slug while the user is in guide mode — they get the 404 page,
-      # not the doc's content. This matters because the index already
-      # hides those docs; making the show route honor the same filter
-      # keeps URL guessing / shared-link scenarios consistent.
-      @doc = Documentation.find_by_slug(params[:slug], mode: @docs_mode)
+      # `params[:mode]` here is the URL path segment (e.g. /docs/technical/foo → "technical")
+      # if the request matched the scoped route. Otherwise, fall back to the resolved
+      # current preference (@docs_mode) so root-mounted docs honor audience-frontmatter
+      # filtering.
+      lookup_mode = params[:mode].presence || @docs_mode
+      @doc = Documentation.find_by_slug(params[:slug], mode: lookup_mode)
 
       if @doc.nil?
         render_not_found
         return
       end
 
+      # `mode:` here controls in-doc <!-- mode: X --> block stripping,
+      # which should reflect the user's PREFERENCE (@docs_mode), not the
+      # URL-path mode (lookup_mode). A /technical/foo URL does not force
+      # guide-only blocks invisible.
       rendered_html = MarkdownRenderer.render(
         @doc.content,
         cache_key: @doc.cache_key,
@@ -88,13 +92,29 @@ module Markdowndocs
     end
 
     def determine_docs_mode
-      mode = params[:mode] ||
+      # Only treat params[:mode] as a preference override on the root-mounted
+      # `/:slug` route. On the scoped `/:mode/:slug` route, params[:mode] is
+      # the URL path segment and is consumed by `show` for doc lookup, not as
+      # a preference override.
+      preference_param = if path_mode_in_request?
+        nil
+      else
+        params[:mode]
+      end
+
+      mode = preference_param ||
         resolve_user_mode ||
         cookies[:markdowndocs_mode] ||
         Markdowndocs.config.default_mode
 
       valid_modes = Markdowndocs.config.modes
       valid_modes.include?(mode) ? mode : Markdowndocs.config.default_mode
+    end
+
+    def path_mode_in_request?
+      # The scoped route names `mode` as a path param. On the unscoped route,
+      # `mode` (when present) comes from the query string.
+      request.path_parameters[:mode].present?
     end
 
     def resolve_user_mode

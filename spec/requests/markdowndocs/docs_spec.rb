@@ -139,6 +139,35 @@ RSpec.describe "Markdowndocs::Docs", type: :request do
     end
   end
 
+  describe "GET /docs/:mode/:slug" do
+    it "renders a mode-scoped document" do
+      get "/docs/technical/architecture"
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("System Architecture")
+    end
+
+    it "renders a mode-scoped doc independently of the current preference (URL determines content)" do
+      get "/docs/technical/architecture", params: {mode: "guide"}
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("System Architecture")
+    end
+
+    it "returns 404 for an unknown mode segment" do
+      get "/docs/notamode/architecture"
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "returns 404 for a mode-scoped slug that doesn't exist" do
+      get "/docs/technical/nonexistent"
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "returns 404 for directory traversal in slug" do
+      get "/docs/technical/..%2F..%2Fetc%2Fpasswd"
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
   # Audience-frontmatter filtering: docs declare `audience:` in their
   # frontmatter and the controller honors it via Documentation's mode:
   # kwarg on both .grouped_by_category (index) and .find_by_slug (show).
