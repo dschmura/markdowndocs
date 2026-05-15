@@ -285,7 +285,7 @@ module Markdowndocs
 
     def assign_category
       Markdowndocs.config.categories.each do |category, slugs|
-        return category if slugs.include?(slug)
+        return category if slugs.include?(path_slug)
       end
 
       "Other"

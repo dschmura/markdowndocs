@@ -343,4 +343,25 @@ RSpec.describe Markdowndocs::Documentation do
       expect(doc.category).to eq("Other")
     end
   end
+
+  describe "#category (path-prefixed slugs in config.categories)" do
+    it "assigns the configured category to a root file via bare slug" do
+      doc = described_class.find_by_slug("billing")
+      expect(doc.category).to eq("Guides")
+    end
+
+    it "assigns the configured category to a mode-scoped file via path-prefixed slug" do
+      doc = described_class.all.find { |d| d.path_slug == "technical/architecture" }
+      expect(doc.category).to eq("Architecture")
+    end
+
+    it "assigns the configured category to a mode-scoped file with a same-named root sibling" do
+      # Both docs/billing.md (Guides) and docs/technical/billing.md (Architecture) exist.
+      root_billing = described_class.all.find { |d| d.path_slug == "billing" }
+      scoped_billing = described_class.all.find { |d| d.path_slug == "technical/billing" }
+
+      expect(root_billing.category).to eq("Guides")
+      expect(scoped_billing.category).to eq("Architecture")
+    end
+  end
 end
