@@ -378,9 +378,22 @@ RSpec.describe Markdowndocs::Documentation do
   end
 
   describe "#cache_key" do
-    it "includes slug and mtime" do
+    it "includes path_slug and mtime" do
       doc = described_class.find_by_slug("welcome")
       expect(doc.cache_key).to match(/\Awelcome-\d+\z/)
+    end
+
+    it "differentiates same-named docs in different mode subdirectories" do
+      root_billing = described_class.all.find { |d| d.path_slug == "billing" }
+      scoped_billing = described_class.all.find { |d| d.path_slug == "technical/billing" }
+
+      expect(root_billing.cache_key).not_to eq(scoped_billing.cache_key)
+    end
+
+    it "sanitizes forward slashes from path_slug" do
+      doc = described_class.all.find { |d| d.path_slug == "technical/architecture" }
+      expect(doc.cache_key).not_to include("/")
+      expect(doc.cache_key).to start_with("technical-architecture-")
     end
   end
 

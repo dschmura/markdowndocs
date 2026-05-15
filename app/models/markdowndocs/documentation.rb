@@ -119,7 +119,7 @@ module Markdowndocs
     end
 
     def cache_key
-      "#{slug}-#{mtime.to_i}"
+      "#{path_slug.tr("/", "-")}-#{mtime.to_i}"
     end
 
     def mtime
