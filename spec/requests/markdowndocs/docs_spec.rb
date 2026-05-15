@@ -69,6 +69,18 @@ RSpec.describe "Markdowndocs::Docs", type: :request do
       expect(controller_count).to eq(2),
         "expected two docs-mode controller instances (mobile + desktop sidebars)"
     end
+
+    it "renders the mode switcher with current_path as a hidden field" do
+      get "/docs/welcome"
+      expect(response.body).to include('name="current_path"')
+      expect(response.body).to include('value="/docs/welcome"')
+    end
+
+    it "renders the mode switcher with current_path on a mode-scoped doc" do
+      get "/docs/technical/architecture"
+      expect(response.body).to include('name="current_path"')
+      expect(response.body).to include('value="/docs/technical/architecture"')
+    end
   end
 
   describe "GET /docs/search_index" do

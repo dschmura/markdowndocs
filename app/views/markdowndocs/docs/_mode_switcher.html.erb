@@ -42,6 +42,7 @@
         }
       ) do |f| %>
         <%= f.hidden_field :mode, value: mode %>
+        <%= f.hidden_field :current_path, value: request.fullpath %>
         <button
           type="submit"
           role="radio"
