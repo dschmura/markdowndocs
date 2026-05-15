@@ -18,6 +18,18 @@ RSpec.describe "Markdowndocs::Docs", type: :request do
       expect(response.body).to include("Welcome")
       expect(response.body).to include("Quickstart Guide")
     end
+
+    it "renders mode-scoped docs in their configured categories when in technical mode" do
+      get "/docs", params: {mode: "technical"}
+      expect(response.body).to include("Architecture")
+      expect(response.body).to include("System Architecture")
+      expect(response.body).to include("Billing Internals")
+    end
+
+    it "drops the Architecture category in guide mode (no visible docs)" do
+      get "/docs", params: {mode: "guide"}
+      expect(response.body).not_to include("Architecture")
+    end
   end
 
   describe "GET /docs/:slug" do

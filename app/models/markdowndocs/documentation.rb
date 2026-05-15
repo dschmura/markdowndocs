@@ -96,9 +96,17 @@ module Markdowndocs
     # When `mode:` is given, filters out docs whose `audience:` excludes
     # that mode AND drops categories that end up empty (so the index
     # sidebar doesn't render headers with no children).
+    #
+    # Resolves slugs by matching against `path_slug` on the full discovered
+    # set so that path-prefixed slugs like "technical/architecture" (which
+    # `find_by_slug` rejects as directory traversal) are found correctly.
     def self.grouped_by_category(mode: nil)
+      all_docs = all
       Markdowndocs.config.categories.each_with_object({}) do |(category, slugs), hash|
-        docs = slugs.map { |slug| find_by_slug(slug, mode: mode) }.compact
+        docs = slugs.filter_map do |slug|
+          doc = all_docs.find { |d| d.path_slug == slug }
+          doc if doc&.visible_to?(mode)
+        end
         hash[category] = docs unless docs.empty?
       end
     end

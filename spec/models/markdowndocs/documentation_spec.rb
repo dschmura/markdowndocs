@@ -174,6 +174,26 @@ RSpec.describe Markdowndocs::Documentation do
       explicitly_nil = described_class.grouped_by_category(mode: nil).values.flatten.map(&:slug).sort
       expect(unfiltered).to eq(explicitly_nil)
     end
+
+    context "with path-prefixed slugs in config.categories" do
+      it "includes mode-scoped docs in the category when current mode matches" do
+        grouped = described_class.grouped_by_category(mode: "technical")
+        architecture_docs = grouped["Architecture"]&.map(&:path_slug)
+        expect(architecture_docs).to include("technical/architecture")
+        expect(architecture_docs).to include("technical/billing")
+      end
+
+      it "drops the category when current mode hides all its mode-scoped docs" do
+        grouped = described_class.grouped_by_category(mode: "guide")
+        expect(grouped).not_to have_key("Architecture")
+      end
+
+      it "rendering the index in technical mode includes Architecture entries" do
+        grouped = described_class.grouped_by_category(mode: "technical")
+        expect(grouped.keys).to include("Architecture")
+        expect(grouped["Architecture"]).to all(be_a(described_class))
+      end
+    end
   end
 
   describe "#audience" do
