@@ -148,6 +148,11 @@ module Markdowndocs
       @audience ||= begin
         parsed = parse_frontmatter
         raw = parsed[:frontmatter]["audience"]
+
+        if raw
+          emit_audience_deprecation_warning_once
+        end
+
         case raw
         when Array then raw.map(&:to_s)
         when String then [raw]
@@ -204,6 +209,38 @@ module Markdowndocs
     def audience_from_path
       dir = file_path.dirname.basename.to_s
       Markdowndocs.config.modes.include?(dir) ? dir : nil
+    end
+
+    def emit_audience_deprecation_warning_once
+      path_str = file_path.to_s
+      emitted = Markdowndocs.config.audience_deprecation_emitted
+      return if emitted.include?(path_str)
+
+      emitted << path_str
+
+      Markdowndocs.deprecator.warn(
+        "`audience:` frontmatter in #{path_str} is deprecated. " \
+        "#{suggest_migration_target} The `audience:` key will be removed in v1.0.0."
+      )
+    end
+
+    def suggest_migration_target
+      parsed = parse_frontmatter
+      raw = parsed[:frontmatter]["audience"]
+
+      case raw
+      when String
+        "Move the file to #{file_path.dirname.join(raw, file_path.basename)} instead and remove the `audience:` key."
+      when Array
+        if Array(raw).map(&:to_s).sort == Markdowndocs.config.modes.sort
+          "This doc is already declared multi-audience; remove the `audience:` key (root files are visible in every mode)."
+        else
+          modes = Array(raw).map(&:to_s).join(", ")
+          "This doc declares audience: [#{modes}]. Path-based routing supports only a single mode per file; either move the file to a single mode subdirectory or leave the file at root and remove `audience:` (root is shared)."
+        end
+      else
+        "Move the file into the mode-named subdirectory matching its audience, or leave it at root and remove the key."
+      end
     end
 
     def extract_metadata

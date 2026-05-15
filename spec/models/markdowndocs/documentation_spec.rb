@@ -312,6 +312,51 @@ RSpec.describe Markdowndocs::Documentation do
     end
   end
 
+  describe "audience: frontmatter deprecation" do
+    before do
+      Markdowndocs.reset_configuration!
+      @original_deprecator_behavior = Markdowndocs.deprecator.behavior
+    end
+
+    after do
+      Markdowndocs.deprecator.behavior = @original_deprecator_behavior
+    end
+
+    it "emits a deprecation warning the first time a doc with audience: frontmatter is read" do
+      warning_text = nil
+      Markdowndocs.deprecator.behavior = ->(message, *) { warning_text = message }
+
+      doc = described_class.find_by_slug("admin-reference", mode: "technical")
+      doc.audience  # force evaluation
+
+      expect(warning_text).to be_present
+      expect(warning_text).to include("admin-reference.md")
+      expect(warning_text).to include("audience:")
+    end
+
+    it "emits the warning at most once per file path" do
+      call_count = 0
+      Markdowndocs.deprecator.behavior = ->(_message, *) { call_count += 1 }
+
+      3.times do
+        doc = described_class.find_by_slug("admin-reference", mode: "technical")
+        doc.audience
+      end
+
+      expect(call_count).to eq(1)
+    end
+
+    it "does NOT emit a warning for path-derived audience (no frontmatter)" do
+      call_count = 0
+      Markdowndocs.deprecator.behavior = ->(_message, *) { call_count += 1 }
+
+      doc = described_class.find_by_slug("architecture", mode: "technical")
+      doc.audience
+
+      expect(call_count).to eq(0)
+    end
+  end
+
   describe "#cache_key" do
     it "includes slug and mtime" do
       doc = described_class.find_by_slug("welcome")

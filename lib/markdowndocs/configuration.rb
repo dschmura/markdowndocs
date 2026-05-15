@@ -6,7 +6,7 @@ module Markdowndocs
       :markdown_options, :rouge_theme, :cache_expiry,
       :user_mode_resolver, :user_mode_saver, :search_enabled,
       :layout
-    attr_reader :non_mode_subdirs_warned
+    attr_reader :non_mode_subdirs_warned, :audience_deprecation_emitted
 
     def initialize
       @docs_path = nil # Resolved lazily so Rails.root is available
@@ -21,6 +21,7 @@ module Markdowndocs
       @search_enabled = false
       @layout = "markdowndocs/application"
       @non_mode_subdirs_warned = Set.new
+      @audience_deprecation_emitted = Set.new
     end
 
     # Lazily resolve docs_path so Rails.root is available
