@@ -63,7 +63,7 @@ module Markdowndocs
         mode: @docs_mode
       )
       @rendered_content = helpers.add_heading_anchors(rendered_html)
-      @related_docs = Documentation.by_category(@doc.category).reject { |d| d.slug == @doc.slug }
+      @related_docs = Documentation.by_category(@doc.category).reject { |d| d.path_slug == @doc.path_slug }
       @available_modes = @doc.available_modes
       @toc_items = helpers.generate_table_of_contents(@rendered_content)
     end
