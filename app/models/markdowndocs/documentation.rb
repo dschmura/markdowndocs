@@ -63,18 +63,24 @@ module Markdowndocs
     end
     private_class_method :warn_about_non_mode_subdirectories
 
-    # When `mode:` is given (e.g. "guide" / "technical"), returns nil if
-    # the resolved doc's `audience:` frontmatter excludes that mode. Docs
-    # without an explicit `audience:` key default to "visible in all modes"
-    # — backward compatible with pre-0.6 docs.
+    # Resolves a doc by slug. When `mode:` is given, prefers the mode-scoped
+    # file (docs/<mode>/<slug>.md) and falls back to the root (docs/<slug>.md)
+    # if visible_to?(mode) passes. With `mode: nil`, only the root is checked.
     def self.find_by_slug(slug, mode: nil)
       return nil if slug.blank?
       return nil if slug.include?("..") || slug.include?("/")
 
-      file_path = Markdowndocs.config.resolved_docs_path.join("#{slug}.md")
-      return nil unless file_path.exist?
+      docs_path = Markdowndocs.config.resolved_docs_path
 
-      doc = new(file_path)
+      if mode.present? && Markdowndocs.config.modes.include?(mode.to_s)
+        scoped = docs_path.join(mode.to_s, "#{slug}.md")
+        return new(scoped) if scoped.exist?
+      end
+
+      root = docs_path.join("#{slug}.md")
+      return nil unless root.exist?
+
+      doc = new(root)
       return nil unless doc.visible_to?(mode)
 
       doc

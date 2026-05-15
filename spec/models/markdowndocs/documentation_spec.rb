@@ -88,6 +88,36 @@ RSpec.describe Markdowndocs::Documentation do
       expect(described_class.find_by_slug("../../../etc/passwd")).to be_nil
       expect(described_class.find_by_slug("foo/bar")).to be_nil
     end
+
+    context "with a mode subdirectory" do
+      it "resolves to the mode-scoped file when mode is given and the file exists" do
+        doc = described_class.find_by_slug("architecture", mode: "technical")
+        expect(doc).not_to be_nil
+        expect(doc.path_slug).to eq("technical/architecture")
+      end
+
+      it "falls back to the root file when no mode-scoped file exists" do
+        # `welcome.md` is at root and has no `docs/technical/welcome.md`.
+        doc = described_class.find_by_slug("welcome", mode: "technical")
+        expect(doc).not_to be_nil
+        expect(doc.path_slug).to eq("welcome")
+      end
+
+      it "returns nil when neither a mode-scoped nor a root file exists" do
+        expect(described_class.find_by_slug("nonexistent", mode: "technical")).to be_nil
+      end
+
+      it "with mode: nil, only checks the root and ignores subdirectory files" do
+        # `architecture` only exists at docs/technical/architecture.md, not root.
+        expect(described_class.find_by_slug("architecture", mode: nil)).to be_nil
+      end
+
+      it "respects visible_to? on root fallback (audience:-deprecated root files)" do
+        # admin-reference is at root with `audience: technical` frontmatter.
+        expect(described_class.find_by_slug("admin-reference", mode: "guide")).to be_nil
+        expect(described_class.find_by_slug("admin-reference", mode: "technical")).not_to be_nil
+      end
+    end
   end
 
   describe ".grouped_by_category" do
