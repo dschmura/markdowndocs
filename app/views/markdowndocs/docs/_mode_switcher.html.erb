@@ -41,7 +41,8 @@
           turbo_action: "replace"
         }
       ) do |f| %>
-        <%= f.hidden_field :mode, value: mode %>
+        <%= f.hidden_field :mode, value: mode, id: nil %>
+        <%= f.hidden_field :current_path, value: request.fullpath, id: nil %>
         <button
           type="submit"
           role="radio"

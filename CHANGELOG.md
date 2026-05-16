@@ -5,6 +5,72 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-05-15
+
+### Added
+
+- **Path-based audience routing.** A first-level subdirectory of
+  `app/docs/` whose name matches an entry in `config.modes` is now
+  treated as an audience scope. Files inside `app/docs/technical/` are
+  visible only when the current mode is `technical`; files at the root
+  remain shared (visible in every mode). The new convention is the
+  recommended way to scope whole documents and replaces `audience:`
+  frontmatter (see Deprecated below).
+- **`/docs/:mode/:slug` route.** Mode-scoped documents are served at
+  stable, RESTful URLs (e.g., `/docs/technical/architecture`). The
+  `:mode` segment is constrained to entries in `config.modes`; unknown
+  modes return 404.
+- **Path-prefixed slugs in `config.categories`.** Slug entries may now
+  include a mode prefix (e.g., `"technical/architecture"`) to attach a
+  mode-scoped doc to a category. Bare slugs continue to match root
+  files. Example:
+
+      config.categories = {
+        "Architecture" => %w[technical/architecture]
+      }
+
+- **Smart navigation in mode switcher.** Toggling the mode now attempts
+  to navigate to a same-slug document in the target mode's location,
+  falling back to the shared root sibling, then staying put. Sharing
+  links still works because URLs are stable.
+- **`Markdowndocs.deprecator`** ActiveSupport::Deprecation instance for
+  emitting gem-specific deprecation warnings. Hosts can configure
+  behavior (silence / raise / log) via standard
+  `ActiveSupport::Deprecation` APIs.
+
+### Changed
+
+- `Documentation.all` walks both `app/docs/*.md` and
+  `app/docs/<mode>/*.md` for every configured mode.
+- `Documentation` instances expose `#path_slug` (the file's path
+  relative to the docs root, sans `.md`).
+- `Documentation.find_by_slug(slug, mode:)` prefers the mode-scoped
+  file first, then falls back to the root.
+- `PreferencesController#update` now expects a `current_path` form
+  field (added in `_mode_switcher.html.erb`) and computes the smart-nav
+  target before redirecting. Hosts with custom forms targeting
+  `preference_path` should include `<input type="hidden"
+  name="current_path" value="<%= request.fullpath %>">` to opt into
+  smart navigation. Without it, the controller redirects to the docs
+  index (no behavior loss, just no smart-nav benefit).
+
+### Deprecated
+
+- **`audience:` frontmatter.** Still functional, but emits a one-shot
+  warning per file path per process boot. Will be removed in v1.0.0.
+  Migration: move the file into a matching mode subdirectory (or, for
+  multi-audience docs, drop the key — root files are shared). The
+  warning message includes the suggested target path.
+
+### Migration notes
+
+- See `README.md` ("Migrating from v0.6.x to v0.7.0") for full guidance.
+- URL stability: every URL from v0.6.x continues to resolve unchanged.
+- Subdirectories under `app/docs/` whose name doesn't match a
+  configured mode are now ignored (one-line warning at discovery). If
+  you've been using non-mode subdirectories for organization, either
+  flatten them or rename them to match a configured mode.
+
 ## [0.6.1] - 2026-05-13
 
 ### Fixed
@@ -194,6 +260,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - i18n support for all UI strings
 - Install generator (`rails generate markdowndocs:install`)
 
+[0.7.0]: https://github.com/dschmura/markdowndocs/releases/tag/v0.7.0
+[0.6.1]: https://github.com/dschmura/markdowndocs/releases/tag/v0.6.1
+[0.6.0]: https://github.com/dschmura/markdowndocs/releases/tag/v0.6.0
 [0.5.0]: https://github.com/dschmura/markdowndocs/releases/tag/v0.5.0
 [0.4.0]: https://github.com/dschmura/markdowndocs/releases/tag/v0.4.0
 [0.3.1]: https://github.com/dschmura/markdowndocs/releases/tag/v0.3.1

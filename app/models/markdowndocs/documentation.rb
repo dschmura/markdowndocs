@@ -5,11 +5,12 @@ module Markdowndocs
   # Represents markdown documentation files from a configurable directory.
   # Handles metadata extraction, frontmatter parsing, and category associations.
   class Documentation
-    attr_reader :slug, :title, :description, :category, :file_path, :keywords
+    attr_reader :slug, :path_slug, :title, :description, :category, :file_path, :keywords
 
     def initialize(file_path)
       @file_path = file_path
       @slug = derive_slug
+      @path_slug = derive_path_slug
       extract_metadata
       @category = assign_category
     end
@@ -18,23 +19,69 @@ module Markdowndocs
       docs_path = Markdowndocs.config.resolved_docs_path
       return [] unless docs_path.exist?
 
-      Dir.glob(docs_path.join("*.md")).map do |file|
-        new(Pathname.new(file))
-      end.sort_by(&:slug)
+      files = Dir.glob(docs_path.join("*.md"))
+
+      modes = Markdowndocs.config.modes
+      modes.each do |mode|
+        mode_dir = docs_path.join(mode)
+        files.concat(Dir.glob(mode_dir.join("*.md"))) if mode_dir.exist?
+      end
+
+      warn_about_non_mode_subdirectories(docs_path, modes)
+
+      files.map { |f| new(Pathname.new(f)) }.sort_by(&:path_slug)
     end
 
-    # When `mode:` is given (e.g. "guide" / "technical"), returns nil if
-    # the resolved doc's `audience:` frontmatter excludes that mode. Docs
-    # without an explicit `audience:` key default to "visible in all modes"
-    # — backward compatible with pre-0.6 docs.
+    # Emits a one-shot warning per process boot for each first-level
+    # subdirectory under docs_path that isn't a configured mode. Files
+    # inside such subdirectories are silently dropped by discovery —
+    # the warning makes that visible.
+    def self.warn_about_non_mode_subdirectories(docs_path, modes)
+      warned = Markdowndocs.config.non_mode_subdirs_warned
+
+      children = begin
+        docs_path.children
+      rescue Errno::ENOENT, Errno::EACCES => e
+        Rails.logger.warn("[Markdowndocs] Could not scan for non-mode subdirectories: #{e.message}")
+        return
+      end
+
+      children.each do |child|
+        next unless child.directory?
+        name = child.basename.to_s
+        next if modes.include?(name)
+        next if warned.include?(name)
+
+        warned << name
+        Rails.logger.warn(
+          "[Markdowndocs] Ignoring subdirectory #{child}/ — name does not match " \
+          "any configured mode (config.modes = #{modes.inspect}). Files inside " \
+          "this subdirectory will not be discovered. Move them into #{docs_path}/ " \
+          "or into a mode-named subdirectory."
+        )
+      end
+    end
+    private_class_method :warn_about_non_mode_subdirectories
+
+    # Resolves a doc by slug. When `mode:` is given, prefers the mode-scoped
+    # file (docs/<mode>/<slug>.md) and falls back to the root (docs/<slug>.md)
+    # if visible_to?(mode) passes. With `mode: nil`, only the root is checked.
     def self.find_by_slug(slug, mode: nil)
       return nil if slug.blank?
       return nil if slug.include?("..") || slug.include?("/")
 
-      file_path = Markdowndocs.config.resolved_docs_path.join("#{slug}.md")
-      return nil unless file_path.exist?
+      docs_path = Markdowndocs.config.resolved_docs_path
+      docs_root_real = docs_path.realpath
 
-      doc = new(file_path)
+      if mode.present? && Markdowndocs.config.modes.include?(mode.to_s)
+        scoped = docs_path.join(mode.to_s, "#{slug}.md")
+        return new(scoped) if scoped.exist? && inside_docs_path?(scoped, docs_root_real)
+      end
+
+      root = docs_path.join("#{slug}.md")
+      return nil unless root.exist? && inside_docs_path?(root, docs_root_real)
+
+      doc = new(root)
       return nil unless doc.visible_to?(mode)
 
       doc
@@ -43,6 +90,18 @@ module Markdowndocs
       nil
     end
 
+    # Returns true when file_path resolves (after following symlinks) to a
+    # location inside docs_root_real. Defense against symlinks that point
+    # outside the docs tree.
+    def self.inside_docs_path?(file_path, docs_root_real)
+      resolved = file_path.realpath
+      resolved.to_s == docs_root_real.to_s ||
+        resolved.to_s.start_with?(docs_root_real.to_s + File::SEPARATOR)
+    rescue Errno::ENOENT, Errno::ELOOP
+      false
+    end
+    private_class_method :inside_docs_path?
+
     def self.by_category(category)
       all.select { |doc| doc.category == category }
     end
@@ -50,9 +109,17 @@ module Markdowndocs
     # When `mode:` is given, filters out docs whose `audience:` excludes
     # that mode AND drops categories that end up empty (so the index
     # sidebar doesn't render headers with no children).
+    #
+    # Resolves slugs by matching against `path_slug` on the full discovered
+    # set so that path-prefixed slugs like "technical/architecture" (which
+    # `find_by_slug` rejects as directory traversal) are found correctly.
     def self.grouped_by_category(mode: nil)
+      all_docs = all
       Markdowndocs.config.categories.each_with_object({}) do |(category, slugs), hash|
-        docs = slugs.map { |slug| find_by_slug(slug, mode: mode) }.compact
+        docs = slugs.filter_map do |slug|
+          doc = all_docs.find { |d| d.path_slug == slug }
+          doc if doc&.visible_to?(mode)
+        end
         hash[category] = docs unless docs.empty?
       end
     end
@@ -65,7 +132,7 @@ module Markdowndocs
     end
 
     def cache_key
-      "#{slug}-#{mtime.to_i}"
+      "#{path_slug.tr("/", "-")}-#{mtime.to_i}"
     end
 
     def mtime
@@ -94,19 +161,25 @@ module Markdowndocs
       available_modes.include?(mode.to_s)
     end
 
-    # The audience(s) this doc is written for, declared via `audience:`
-    # frontmatter. Accepts a single string or an array; both are coerced
-    # to an Array<String>. When the frontmatter key is missing, defaults
-    # to all configured modes — a doc with no audience declaration is
-    # visible in every mode (backward compat with pre-0.6 docs).
+    # The audience(s) this doc is written for. Resolution order:
+    #   1. `audience:` frontmatter (DEPRECATED in 0.7.0, removed in 1.0.0)
+    #   2. Parent directory name when it matches a configured mode
+    #   3. All configured modes (root file with no override — visible everywhere)
     def audience
       @audience ||= begin
         parsed = parse_frontmatter
         raw = parsed[:frontmatter]["audience"]
+
+        if raw
+          emit_audience_deprecation_warning_once
+        end
+
         case raw
         when Array then raw.map(&:to_s)
         when String then [raw]
-        when nil then Markdowndocs.config.modes.dup
+        when nil
+          scope = audience_from_path
+          scope ? [scope] : Markdowndocs.config.modes.dup
         else Markdowndocs.config.modes.dup
         end
       end
@@ -146,6 +219,49 @@ module Markdowndocs
 
     def derive_slug
       file_path.basename(".md").to_s
+    end
+
+    def derive_path_slug
+      docs_root = Markdowndocs.config.resolved_docs_path
+      relative = file_path.relative_path_from(docs_root)
+      relative.sub_ext("").to_s
+    end
+
+    def audience_from_path
+      dir = file_path.dirname.basename.to_s
+      Markdowndocs.config.modes.include?(dir) ? dir : nil
+    end
+
+    def emit_audience_deprecation_warning_once
+      path_str = file_path.to_s
+      emitted = Markdowndocs.config.audience_deprecation_emitted
+      return if emitted.include?(path_str)
+
+      emitted << path_str
+
+      Markdowndocs.deprecator.warn(
+        "`audience:` frontmatter in #{path_str} is deprecated. " \
+        "#{suggest_migration_target} The `audience:` key will be removed in v1.0.0."
+      )
+    end
+
+    def suggest_migration_target
+      parsed = parse_frontmatter
+      raw = parsed[:frontmatter]["audience"]
+
+      case raw
+      when String
+        "Move the file to #{file_path.dirname.join(raw, file_path.basename)} instead and remove the `audience:` key."
+      when Array
+        if Array(raw).map(&:to_s).sort == Markdowndocs.config.modes.sort
+          "This doc is already declared multi-audience; remove the `audience:` key (root files are visible in every mode)."
+        else
+          modes = Array(raw).map(&:to_s).join(", ")
+          "This doc declares audience: [#{modes}]. Path-based routing supports only a single mode per file; either move the file to a single mode subdirectory or leave the file at root and remove `audience:` (root is shared)."
+        end
+      else
+        "Move the file into the mode-named subdirectory matching its audience, or leave it at root and remove the key."
+      end
     end
 
     def extract_metadata
@@ -227,7 +343,7 @@ module Markdowndocs
 
     def assign_category
       Markdowndocs.config.categories.each do |category, slugs|
-        return category if slugs.include?(slug)
+        return category if slugs.include?(path_slug)
       end
 
       "Other"
