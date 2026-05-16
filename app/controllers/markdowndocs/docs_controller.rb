@@ -26,7 +26,7 @@ module Markdowndocs
       json = Rails.cache.fetch(cache_key, expires_in: Markdowndocs.config.cache_expiry) do
         Documentation.all.map do |doc|
           {
-            id: doc.slug,
+            id: doc.path_slug,
             title: doc.title,
             description: doc.description,
             content: doc.plain_text_content,

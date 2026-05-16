@@ -147,6 +147,22 @@ RSpec.describe "Markdowndocs::Docs", type: :request do
         doc = json.find { |d| d["id"] == "authentication" }
         expect(doc["keywords"]).to eq("login signin password session")
       end
+
+      it "returns unique ids for same-named docs in different mode subdirectories" do
+        get "/docs/search_index"
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        ids = json.map { |d| d["id"] }
+        expect(ids.uniq.length).to eq(ids.length)
+      end
+
+      it "uses path_slug (e.g., 'technical/billing') as the id, not the bare slug" do
+        get "/docs/search_index"
+        json = JSON.parse(response.body)
+        ids = json.map { |d| d["id"] }
+        expect(ids).to include("technical/billing")
+        expect(ids).to include("billing")
+      end
     end
   end
 
