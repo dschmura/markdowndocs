@@ -99,6 +99,21 @@ RSpec.describe "Markdowndocs::Docs", type: :request do
       expect(response.body.scan('id="mode"').length).to eq(0)
       expect(response.body.scan('id="current_path"').length).to eq(0)
     end
+
+    it "sets the page title to the doc's title" do
+      get "/docs/welcome"
+      expect(response.body).to include("<title>Welcome — Documentation</title>")
+    end
+
+    it "sets the page title for a mode-scoped doc" do
+      get "/docs/technical/architecture"
+      expect(response.body).to include("<title>System Architecture — Documentation</title>")
+    end
+
+    it "marks the article wrapper as autofocus-able for Turbo navigation a11y" do
+      get "/docs/welcome"
+      expect(response.body).to match(/<article[^>]*tabindex="-1"[^>]*autofocus/)
+    end
   end
 
   describe "GET /docs/search_index" do
