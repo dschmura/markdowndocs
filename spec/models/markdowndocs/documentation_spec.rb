@@ -118,6 +118,44 @@ RSpec.describe Markdowndocs::Documentation do
         expect(described_class.find_by_slug("admin-reference", mode: "technical")).not_to be_nil
       end
     end
+
+    context "symlink protection" do
+      it "rejects a symlink that escapes the docs path" do
+        Dir.mktmpdir do |docs_tmp|
+          Dir.mktmpdir do |outside_tmp|
+            # Outside file the symlink will target.
+            outside_file = Pathname.new(outside_tmp).join("secret.md")
+            outside_file.write("# Secret\n\nShould not be readable.")
+
+            # Symlink inside docs that points outside.
+            docs_path = Pathname.new(docs_tmp)
+            link = docs_path.join("hijack.md")
+            File.symlink(outside_file.to_s, link.to_s)
+
+            Markdowndocs.config.docs_path = docs_path
+
+            expect(described_class.find_by_slug("hijack")).to be_nil
+          end
+        end
+      end
+
+      it "still resolves a symlink that points to another file INSIDE docs_path" do
+        Dir.mktmpdir do |docs_tmp|
+          docs_path = Pathname.new(docs_tmp)
+          real_file = docs_path.join("real.md")
+          real_file.write("# Real\n")
+
+          link = docs_path.join("alias.md")
+          File.symlink(real_file.to_s, link.to_s)
+
+          Markdowndocs.config.docs_path = docs_path
+
+          doc = described_class.find_by_slug("alias")
+          expect(doc).not_to be_nil
+          expect(doc.content).to include("Real")
+        end
+      end
+    end
   end
 
   describe ".grouped_by_category" do

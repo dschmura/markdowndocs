@@ -71,14 +71,15 @@ module Markdowndocs
       return nil if slug.include?("..") || slug.include?("/")
 
       docs_path = Markdowndocs.config.resolved_docs_path
+      docs_root_real = docs_path.realpath
 
       if mode.present? && Markdowndocs.config.modes.include?(mode.to_s)
         scoped = docs_path.join(mode.to_s, "#{slug}.md")
-        return new(scoped) if scoped.exist?
+        return new(scoped) if scoped.exist? && inside_docs_path?(scoped, docs_root_real)
       end
 
       root = docs_path.join("#{slug}.md")
-      return nil unless root.exist?
+      return nil unless root.exist? && inside_docs_path?(root, docs_root_real)
 
       doc = new(root)
       return nil unless doc.visible_to?(mode)
@@ -88,6 +89,18 @@ module Markdowndocs
       Rails.logger.error("Error finding documentation by slug '#{slug}': #{e.message}")
       nil
     end
+
+    # Returns true when file_path resolves (after following symlinks) to a
+    # location inside docs_root_real. Defense against symlinks that point
+    # outside the docs tree.
+    def self.inside_docs_path?(file_path, docs_root_real)
+      resolved = file_path.realpath
+      resolved.to_s == docs_root_real.to_s ||
+        resolved.to_s.start_with?(docs_root_real.to_s + File::SEPARATOR)
+    rescue Errno::ENOENT, Errno::ELOOP
+      false
+    end
+    private_class_method :inside_docs_path?
 
     def self.by_category(category)
       all.select { |doc| doc.category == category }
