@@ -68,7 +68,10 @@
           lg:grid-cols-12">
       <!-- Main content -->
       <main class="lg:col-span-8">
-        <article class="bg-white dark:bg-slate-800 rounded-lg shadow-sm p-8">
+        <article
+          tabindex="-1"
+          autofocus
+          class="bg-white dark:bg-slate-800 rounded-lg shadow-sm p-8">
           <div class="prose prose-indigo dark:prose-invert max-w-none">
             <%= raw @rendered_content %>
           </div>
