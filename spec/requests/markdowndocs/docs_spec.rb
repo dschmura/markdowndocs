@@ -93,6 +93,12 @@ RSpec.describe "Markdowndocs::Docs", type: :request do
       expect(response.body).to include('name="current_path"')
       expect(response.body).to include('value="/docs/technical/architecture"')
     end
+
+    it "does not emit duplicate id=\"mode\" or id=\"current_path\" on the show page" do
+      get "/docs/welcome"
+      expect(response.body.scan('id="mode"').length).to eq(0)
+      expect(response.body.scan('id="current_path"').length).to eq(0)
+    end
   end
 
   describe "GET /docs/search_index" do
