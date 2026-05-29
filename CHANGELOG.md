@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-05-29
+
+### Added
+
+- **Opt-in inline SVG (`config.allow_svg`).** When set to `true`, a curated,
+  safe subset of structural SVG tags and attributes is permitted in rendered
+  documents — useful for hand-authored diagrams. The `Rails::HTML5`
+  SafeListSanitizer remains the security boundary: `<script>`,
+  `<foreignObject>`, `on*` event handlers, and `javascript:` URIs are still
+  stripped. Defaults to `false`, so existing behavior is unchanged.
+
+### Fixed
+
+- Heading-anchor injection, table-of-contents extraction, and syntax
+  highlighting now parse with `Nokogiri::HTML5` instead of `Nokogiri::HTML`,
+  preserving case-sensitive SVG/MathML foreign-content attributes (e.g.
+  `viewBox`, `markerWidth`, `refX`) that were previously lowercased on
+  re-serialization, which silently broke any inline SVG.
+
 ## [0.7.0] - 2026-05-15
 
 ### Added
