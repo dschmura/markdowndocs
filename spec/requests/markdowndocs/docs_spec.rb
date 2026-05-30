@@ -218,6 +218,16 @@ RSpec.describe "Markdowndocs::Docs", type: :request do
       expect(response).to have_http_status(:not_found)
     end
 
+    it "returns 404 when the requested mode has been removed from config.modes at runtime" do
+      # Regression: the route's mode constraint must read live config, not a
+      # snapshot taken at route-draw time, otherwise dev-reload edits to
+      # config.modes silently leave stale URLs reachable until full restart.
+      Markdowndocs.config.modes = %w[guide]
+      get "/docs/technical/architecture"
+      expect(response).to have_http_status(:not_found)
+    end
+
+
     it "returns 404 for a mode-scoped slug that doesn't exist" do
       get "/docs/technical/nonexistent"
       expect(response).to have_http_status(:not_found)
