@@ -51,9 +51,19 @@ module Markdowndocs
         html = apply_syntax_highlighting(html)
         sanitize_html(html)
       rescue => e
+        # Bare rescue is intentional: third-party errors from commonmarker,
+        # Gumbo (Nokogiri::HTML5), Rouge, and Loofah are diverse and not
+        # worth enumerating. We never want a single malformed doc — e.g.
+        # a deeply nested inline SVG — to blank-render the page. Logs
+        # carry the diagnostic; the user sees their content as text.
         Rails.logger.error("Markdowndocs::MarkdownRenderer error: #{e.message}")
-        Rails.logger.error(e.backtrace.join("\n"))
-        ""
+        Rails.logger.error(e.backtrace.first(20).join("\n"))
+        render_fallback(markdown)
+      end
+
+      def render_fallback(markdown)
+        escaped = ERB::Util.html_escape(markdown.to_s)
+        %(<pre class="markdowndocs-render-error">#{escaped}</pre>)
       end
 
       def apply_syntax_highlighting(html)

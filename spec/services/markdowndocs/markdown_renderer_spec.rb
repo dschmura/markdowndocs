@@ -99,6 +99,27 @@ RSpec.describe Markdowndocs::MarkdownRenderer do
         expect(html).not_to include("<script")
         expect(html).not_to include("onload")
       end
+
+      after { Markdowndocs.config.allow_svg = false }
+    end
+
+    context "when the rendering pipeline raises" do
+      it "falls back to an escaped pre block instead of returning empty" do
+        # Force any downstream failure (parse, sanitize, highlight) to fire.
+        allow(Commonmarker).to receive(:parse).and_raise(RuntimeError, "boom")
+
+        result = described_class.render("# Hello\n\nThis is **bold**.\n")
+
+        # Page is not silently wiped — the user sees their content as text,
+        # preserved verbatim in a code block.
+        expect(result).not_to eq("")
+        expect(result).to include("Hello")
+        expect(result).to include("bold")
+        # The fallback escapes — no live HTML element renders from the markdown.
+        expect(result).not_to include("<strong>")
+        # And the fallback is wrapped recognizably so hosts can style it.
+        expect(result).to include("markdowndocs-render-error")
+      end
     end
   end
 end
