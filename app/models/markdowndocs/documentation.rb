@@ -19,15 +19,24 @@ module Markdowndocs
       docs_path = Markdowndocs.config.resolved_docs_path
       return [] unless docs_path.exist?
 
+      docs_root_real = docs_path.realpath
+
       files = Dir.glob(docs_path.join("*.md"))
 
       modes = Markdowndocs.config.modes
       modes.each do |mode|
         mode_dir = docs_path.join(mode)
-        files.concat(Dir.glob(mode_dir.join("*.md"))) if mode_dir.exist?
+        next unless mode_dir.exist?
+        next unless inside_docs_path?(mode_dir, docs_root_real)
+        files.concat(Dir.glob(mode_dir.join("*.md")))
       end
 
-      warn_about_non_mode_subdirectories(docs_path, modes)
+      # Drop symlink-escapes from the merged file list.
+      files = files.select do |f|
+        inside_docs_path?(Pathname.new(f), docs_root_real)
+      end
+
+      warn_about_non_mode_subdirectories(docs_path, modes, docs_root_real)
 
       files.map { |f| new(Pathname.new(f)) }.sort_by(&:path_slug)
     end
@@ -36,8 +45,9 @@ module Markdowndocs
     # subdirectory under docs_path that isn't a configured mode. Files
     # inside such subdirectories are silently dropped by discovery —
     # the warning makes that visible.
-    def self.warn_about_non_mode_subdirectories(docs_path, modes)
+    def self.warn_about_non_mode_subdirectories(docs_path, modes, docs_root_real = nil)
       warned = Markdowndocs.config.non_mode_subdirs_warned
+      docs_root_real ||= docs_path.realpath
 
       children = begin
         docs_path.children
@@ -48,6 +58,8 @@ module Markdowndocs
 
       children.each do |child|
         next unless child.directory?
+        # Don't follow symlinked subdirs that escape docs_path.
+        next unless inside_docs_path?(child, docs_root_real)
         name = child.basename.to_s
         next if modes.include?(name)
         next if warned.include?(name)
