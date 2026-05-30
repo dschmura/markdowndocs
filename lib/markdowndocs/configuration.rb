@@ -2,16 +2,24 @@
 
 module Markdowndocs
   class Configuration
-    attr_accessor :docs_path, :categories, :modes, :default_mode,
+    # Route segments owned by the engine itself. A mode name matching any
+    # of these would collide with built-in routes / controller actions.
+    RESERVED_MODE_NAMES = %w[search_index preference preferences].freeze
+
+    attr_accessor :docs_path, :categories, :default_mode,
       :markdown_options, :rouge_theme, :cache_expiry,
       :user_mode_resolver, :user_mode_saver, :search_enabled,
       :layout, :allow_svg
-    attr_reader :non_mode_subdirs_warned, :audience_deprecation_emitted
+    attr_reader :modes, :non_mode_subdirs_warned, :audience_deprecation_emitted
+
+    def modes=(value)
+      @modes = normalize_modes(value)
+    end
 
     def initialize
       @docs_path = nil # Resolved lazily so Rails.root is available
       @categories = {}
-      @modes = %w[guide technical]
+      self.modes = %w[guide technical]
       @default_mode = "guide"
       @markdown_options = default_markdown_options
       @rouge_theme = "github"
@@ -35,6 +43,38 @@ module Markdowndocs
     end
 
     private
+
+    def normalize_modes(value)
+      list = Array(value).map do |entry|
+        unless entry.is_a?(String)
+          raise ArgumentError,
+            "config.modes entries must be strings; got #{entry.inspect}"
+        end
+
+        name = entry.strip
+
+        if name.empty?
+          raise ArgumentError, "config.modes contains an invalid empty entry"
+        end
+
+        if name.match?(%r{[/?#&\s]})
+          raise ArgumentError,
+            "config.modes entry #{entry.inspect} is invalid — names cannot contain " \
+            "path separators, URL-significant characters, or whitespace"
+        end
+
+        if RESERVED_MODE_NAMES.include?(name)
+          raise ArgumentError,
+            "config.modes entry #{name.inspect} is reserved by the engine " \
+            "(conflicts with built-in route or controller). " \
+            "Reserved names: #{RESERVED_MODE_NAMES.join(", ")}"
+        end
+
+        name
+      end
+
+      list.uniq
+    end
 
     def default_markdown_options
       {
