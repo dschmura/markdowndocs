@@ -118,19 +118,24 @@ Add optional YAML front matter to set metadata:
 ---
 title: "Quick Start Guide"
 description: "Get up and running in five minutes"
-audience:
-  - guide
-  - technical
-modes:
-  - guide
-  - technical
-default_mode: guide
+keywords: [setup, install]
 ---
 
 # Quick Start Guide
 
 Your content here...
 ```
+
+Recognized keys:
+
+| Key            | Type             | Purpose                                                                          |
+| -------------- | ---------------- | -------------------------------------------------------------------------------- |
+| `title`        | String           | Overrides the H1-derived title shown in nav and `<title>`                        |
+| `description`  | String           | Card description on the index page; defaults to the first paragraph              |
+| `keywords`     | Array of String  | Tags surfaced to the search indexer                                              |
+| `modes`        | Array of String  | Per-doc override of which modes contain block-filtered content (see Mode Blocks) |
+| `default_mode` | String           | Per-doc default mode (overrides `config.default_mode`)                           |
+| `audience`     | String / Array   | **Deprecated.** Use filesystem-path scoping instead — see below                  |
 
 If front matter is omitted, the title is extracted from the first H1 heading and the description from the first paragraph.
 
@@ -157,12 +162,47 @@ URLs follow the filesystem layout: `app/docs/billing.md` is served at
 Subdirectories whose name does not match a configured mode are ignored
 by document discovery, with a one-line warning at boot.
 
+#### Linking to Docs from Your Host App
+
+The engine exposes two named route helpers under its mount point:
+
+```erb
+<%# Shared (root) doc — /docs/billing %>
+<%= link_to "Billing", markdowndocs.doc_path(slug: "billing") %>
+
+<%# Mode-scoped doc — /docs/technical/architecture %>
+<%= link_to "Architecture",
+            markdowndocs.scoped_doc_path(mode: "technical", slug: "architecture") %>
+```
+
+The `:mode` segment is constrained at the route level; unknown modes
+404 rather than reach the controller.
+
+#### Switching Modes
+
+The mode switcher in the docs UI is *smart* about navigation. When the
+viewer toggles modes, the engine attempts to keep them on the
+equivalent document in the target mode:
+
+- On `/docs/billing` (shared root), switching to `technical` redirects
+  to `/docs/technical/billing` if that scoped sibling exists; otherwise
+  it stays on the shared doc.
+- On `/docs/technical/architecture`, switching to `guide` redirects to
+  `/docs/architecture` if a shared sibling exists; otherwise it stays
+  on the current page.
+- Toggling from the index (`/docs`) just reloads the index in the new
+  mode.
+
+URLs remain stable across the toggle — bookmarks and shared links to
+mode-scoped docs keep working.
+
 ### Audience Filtering by Frontmatter (deprecated)
 
 The `audience:` frontmatter key from v0.6.0 still works in v0.7.x but is
 deprecated. A warning is logged the first time each affected file is
 read. Move the file into the matching mode subdirectory and remove the
-`audience:` key. See the migration guide below.
+`audience:` key — see [Migrating from v0.6.x to v0.7.0](#migrating-from-v06x-to-v070)
+for step-by-step diffs.
 
 ```yaml
 audience: technical          # deprecated — move to app/docs/technical/
