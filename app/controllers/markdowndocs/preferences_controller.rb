@@ -43,20 +43,34 @@ module Markdowndocs
       slug = extract_slug_from_path(current_path)
       return index_path if slug.nil?
 
-      docs_path = Markdowndocs.config.resolved_docs_path
-      scoped_file = docs_path.join(target_mode, "#{slug}.md")
-      root_file = docs_path.join("#{slug}.md")
-
       scoped_url = markdowndocs.scoped_doc_path(mode: target_mode, slug: slug)
       root_url = markdowndocs.doc_path(slug: slug)
 
-      if scoped_file.exist? && current_path != scoped_url
+      # Use Documentation.find_by_slug for existence so symlink-escape
+      # rejection (and any other reachability rules) match what the show
+      # action would actually serve. Bypassing this — e.g. with raw
+      # File.exist? — can redirect the user into a 404.
+      if scoped_sibling_reachable?(slug, target_mode) && current_path != scoped_url
         scoped_url
-      elsif root_file.exist? && current_path != root_url
+      elsif root_sibling_reachable?(slug) && current_path != root_url
         root_url
       else
         current_path
       end
+    end
+
+    def scoped_sibling_reachable?(slug, target_mode)
+      docs_path = Markdowndocs.config.resolved_docs_path
+      scoped_file = docs_path.join(target_mode, "#{slug}.md")
+      return false unless scoped_file.exist?
+      Documentation.inside_docs_path?(scoped_file, docs_path.realpath)
+    end
+
+    def root_sibling_reachable?(slug)
+      docs_path = Markdowndocs.config.resolved_docs_path
+      root_file = docs_path.join("#{slug}.md")
+      return false unless root_file.exist?
+      Documentation.inside_docs_path?(root_file, docs_path.realpath)
     end
 
     # Pulls the slug from a docs path. Returns nil if the path is the index

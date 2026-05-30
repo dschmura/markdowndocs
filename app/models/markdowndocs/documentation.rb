@@ -104,7 +104,9 @@ module Markdowndocs
 
     # Returns true when file_path resolves (after following symlinks) to a
     # location inside docs_root_real. Defense against symlinks that point
-    # outside the docs tree.
+    # outside the docs tree. Callers outside this class (e.g. smart-nav in
+    # PreferencesController) use this to keep reachability checks aligned
+    # with what the show action would actually serve.
     def self.inside_docs_path?(file_path, docs_root_real)
       resolved = file_path.realpath
       resolved.to_s == docs_root_real.to_s ||
@@ -112,7 +114,6 @@ module Markdowndocs
     rescue Errno::ENOENT, Errno::ELOOP
       false
     end
-    private_class_method :inside_docs_path?
 
     def self.by_category(category)
       all.select { |doc| doc.category == category }
