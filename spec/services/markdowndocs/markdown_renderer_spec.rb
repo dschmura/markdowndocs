@@ -100,6 +100,35 @@ RSpec.describe Markdowndocs::MarkdownRenderer do
         expect(html).not_to include("onload")
       end
 
+      it "preserves ARIA labelling attributes so inline diagrams have accessible names" do
+        Markdowndocs.config.allow_svg = true
+        html = described_class.render(
+          %(<svg role="img" aria-label="System diagram" aria-describedby="d1" focusable="false">) +
+            %(<desc id="d1">A high-level system overview.</desc><circle cx="1" cy="1" r="1"/></svg>)
+        )
+        expect(html).to include('role="img"')
+        expect(html).to include('aria-label="System diagram"')
+        expect(html).to include('aria-describedby="d1"')
+        expect(html).to include('focusable="false"')
+        expect(html).to include("<desc")
+      end
+
+      it "preserves aria-hidden on decorative inline SVGs" do
+        Markdowndocs.config.allow_svg = true
+        html = described_class.render(
+          %(<svg aria-hidden="true"><circle cx="1" cy="1" r="1"/></svg>)
+        )
+        expect(html).to include('aria-hidden="true"')
+      end
+
+      it "preserves xmlns so downstream XML consumers can re-parse the snippet" do
+        Markdowndocs.config.allow_svg = true
+        html = described_class.render(
+          %(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><circle cx="1" cy="1" r="1"/></svg>)
+        )
+        expect(html).to include('xmlns="http://www.w3.org/2000/svg"')
+      end
+
       after { Markdowndocs.config.allow_svg = false }
     end
 

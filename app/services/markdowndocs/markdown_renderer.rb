@@ -123,15 +123,31 @@ module Markdowndocs
         code pre span div
       ].freeze
 
-      BASE_SANITIZE_ATTRS = %w[href title src alt align class lang].freeze
+      # ARIA labelling/role attributes are useful on any element. Adding them
+      # to BASE keeps non-SVG inline HTML accessible too (when allow_svg=true).
+      # No security risk — ARIA attributes carry no executable content.
+      BASE_SANITIZE_ATTRS = %w[
+        href title src alt align class lang
+        role aria-label aria-labelledby aria-describedby aria-hidden
+      ].freeze
 
       # Curated structural SVG subset. Deliberately excludes script,
       # foreignObject, and SMIL animate/set tags, plus all on* handlers — the
       # SafeListSanitizer drops anything not listed, so scripts/handlers and
       # javascript: URIs are stripped even with unsafe HTML enabled.
+      #
+      # Note: `<title>` is NOT included. Despite appearing safe, the HTML5
+      # parser treats `<title>` as a raw-text element when encountered in
+      # HTML context, so its content escapes into the surrounding text and
+      # the `<title>` element itself is dropped. Authors who want an
+      # accessible name for an inline SVG should use:
+      #
+      #   <svg role="img" aria-label="Architecture diagram">…</svg>
+      #
+      # or pair the SVG with a `<desc>` element and aria-describedby.
       SVG_SANITIZE_TAGS = %w[
         svg g path rect circle ellipse line polyline polygon
-        text tspan defs marker title desc
+        text tspan defs marker desc
       ].freeze
 
       SVG_SANITIZE_ATTRS = %w[
@@ -141,7 +157,7 @@ module Markdowndocs
         transform opacity text-anchor dominant-baseline
         font-size font-family font-weight
         marker-start marker-end markerWidth markerHeight refX refY orient
-        role aria-label id
+        id xmlns focusable tabindex
       ].freeze
 
       def sanitize_html(html)
