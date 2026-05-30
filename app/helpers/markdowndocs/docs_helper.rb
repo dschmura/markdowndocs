@@ -5,7 +5,9 @@ module Markdowndocs
     def generate_table_of_contents(html)
       return [] if html.blank?
 
-      doc = Nokogiri::HTML.fragment(html)
+      # HTML5 parsing preserves case-sensitive foreign-content (SVG/MathML)
+      # attributes like viewBox/markerWidth; Nokogiri::HTML lowercases them.
+      doc = Nokogiri::HTML5.fragment(html)
       toc_items = []
 
       doc.css("h2, h3").each do |heading|
@@ -35,7 +37,9 @@ module Markdowndocs
     def add_heading_anchors(html)
       return html if html.blank?
 
-      doc = Nokogiri::HTML.fragment(html)
+      # HTML5 parsing preserves case-sensitive foreign-content (SVG/MathML)
+      # attributes like viewBox/markerWidth; Nokogiri::HTML lowercases them.
+      doc = Nokogiri::HTML5.fragment(html)
 
       doc.css("h2, h3").each do |heading|
         text = heading.text.strip

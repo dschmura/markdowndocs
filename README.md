@@ -71,6 +71,11 @@ Markdowndocs.configure do |config|
   # Cache expiry for rendered markdown (default: 1.hour)
   # config.cache_expiry = 1.hour
 
+  # Allow a curated, safe subset of inline SVG (for hand-authored diagrams).
+  # Scripts, event handlers, and javascript: URIs are still stripped by the
+  # sanitizer. Default: false. (default: false)
+  # config.allow_svg = true
+
   # Optional: Resolve current user's mode preference from database
   # config.user_mode_resolver = ->(controller) {
   #   controller.send(:current_user)&.preferences&.docs_mode

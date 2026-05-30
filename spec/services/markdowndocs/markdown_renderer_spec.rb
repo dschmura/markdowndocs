@@ -75,5 +75,30 @@ RSpec.describe Markdowndocs::MarkdownRenderer do
         expect(first).to eq(second)
       end
     end
+
+    context "inline SVG (config.allow_svg)" do
+      let(:svg) { %(<svg viewBox="0 0 10 10"><circle cx="1" cy="1" r="1"></circle></svg>) }
+
+      it "strips <svg> by default (allow_svg off)" do
+        html = described_class.render(svg)
+        expect(html).not_to include("<svg")
+      end
+
+      it "renders inline <svg> with camelCase attributes preserved when enabled" do
+        Markdowndocs.config.allow_svg = true
+        html = described_class.render("# Heading\n\n#{svg}")
+        expect(html).to include("<svg")
+        expect(html).to include('viewBox="0 0 10 10"')
+        expect(html).to include("<circle")
+      end
+
+      it "still strips <script> and event handlers inside SVG when enabled" do
+        Markdowndocs.config.allow_svg = true
+        html = described_class.render(%(<svg onload="x()"><script>alert(1)</script><circle cx="1" cy="1" r="1"></circle></svg>))
+        expect(html).to include("<svg")
+        expect(html).not_to include("<script")
+        expect(html).not_to include("onload")
+      end
+    end
   end
 end

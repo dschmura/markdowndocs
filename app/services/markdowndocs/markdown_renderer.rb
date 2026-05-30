@@ -45,8 +45,9 @@ module Markdowndocs
       end
 
       def render_markdown(markdown)
-        doc = Commonmarker.parse(markdown, options: Markdowndocs.config.markdown_options)
-        html = doc.to_html(options: Markdowndocs.config.markdown_options)
+        options = markdown_render_options
+        doc = Commonmarker.parse(markdown, options: options)
+        html = doc.to_html(options: options)
         html = apply_syntax_highlighting(html)
         sanitize_html(html)
       rescue => e
@@ -56,7 +57,9 @@ module Markdowndocs
       end
 
       def apply_syntax_highlighting(html)
-        doc = Nokogiri::HTML.fragment(html)
+        # HTML5 parsing preserves case-sensitive SVG/MathML foreign-content
+        # attributes (e.g. viewBox) that Nokogiri::HTML would lowercase.
+        doc = Nokogiri::HTML5.fragment(html)
 
         doc.css("pre[lang]").each do |pre|
           language = pre["lang"]
@@ -91,25 +94,53 @@ module Markdowndocs
         "<pre><code>#{ERB::Util.html_escape(code)}</code></pre>"
       end
 
-      def sanitize_html(html)
-        sanitizer = Rails::HTML5::SafeListSanitizer.new
+      # Force commonmarker to pass raw HTML through when SVG is allowed, so the
+      # markup reaches the sanitizer (the security boundary) instead of being
+      # escaped. Returns a copy — does not mutate the configured options.
+      def markdown_render_options
+        options = Markdowndocs.config.markdown_options
+        return options unless Markdowndocs.config.allow_svg
 
-        sanitizer.sanitize(
+        options.merge(render: (options[:render] || {}).merge(unsafe: true))
+      end
+
+      BASE_SANITIZE_TAGS = %w[
+        h1 h2 h3 h4 h5 h6 p br hr blockquote
+        ul ol li dl dt dd
+        table thead tbody tfoot tr th td
+        a img
+        strong em b i u del
+        code pre span div
+      ].freeze
+
+      BASE_SANITIZE_ATTRS = %w[href title src alt align class lang].freeze
+
+      # Curated structural SVG subset. Deliberately excludes script,
+      # foreignObject, and SMIL animate/set tags, plus all on* handlers — the
+      # SafeListSanitizer drops anything not listed, so scripts/handlers and
+      # javascript: URIs are stripped even with unsafe HTML enabled.
+      SVG_SANITIZE_TAGS = %w[
+        svg g path rect circle ellipse line polyline polygon
+        text tspan defs marker title desc
+      ].freeze
+
+      SVG_SANITIZE_ATTRS = %w[
+        viewBox d points
+        x y x1 y1 x2 y2 cx cy r rx ry width height
+        fill stroke stroke-width stroke-linecap stroke-linejoin stroke-dasharray
+        transform opacity text-anchor dominant-baseline
+        font-size font-family font-weight
+        marker-start marker-end markerWidth markerHeight refX refY orient
+        role aria-label id
+      ].freeze
+
+      def sanitize_html(html)
+        allow_svg = Markdowndocs.config.allow_svg
+
+        Rails::HTML5::SafeListSanitizer.new.sanitize(
           html,
-          tags: %w[
-            h1 h2 h3 h4 h5 h6 p br hr blockquote
-            ul ol li dl dt dd
-            table thead tbody tfoot tr th td
-            a img
-            strong em b i u del
-            code pre span div
-          ],
-          attributes: %w[
-            href title
-            src alt
-            align
-            class lang
-          ]
+          tags: allow_svg ? BASE_SANITIZE_TAGS + SVG_SANITIZE_TAGS : BASE_SANITIZE_TAGS,
+          attributes: allow_svg ? BASE_SANITIZE_ATTRS + SVG_SANITIZE_ATTRS : BASE_SANITIZE_ATTRS
         )
       end
     end

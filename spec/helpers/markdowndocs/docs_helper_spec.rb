@@ -55,5 +55,15 @@ RSpec.describe Markdowndocs::DocsHelper, type: :helper do
       expect(helper.add_heading_anchors("")).to eq("")
       expect(helper.add_heading_anchors(nil)).to be_nil
     end
+
+    it "preserves camelCase SVG attributes through re-serialization" do
+      html = %(<h2>Title</h2><svg viewBox="0 0 10 10"><marker markerWidth="4" refX="2"></marker><circle cx="1" cy="1" r="1"></circle></svg>)
+      result = helper.add_heading_anchors(html)
+
+      expect(result).to include('viewBox="0 0 10 10"')
+      expect(result).to include('markerWidth="4"')
+      expect(result).to include('refX="2"')
+      expect(result).not_to match(/viewbox=|markerwidth=|refx=/)
+    end
   end
 end

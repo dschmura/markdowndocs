@@ -5,7 +5,7 @@ module Markdowndocs
     attr_accessor :docs_path, :categories, :modes, :default_mode,
       :markdown_options, :rouge_theme, :cache_expiry,
       :user_mode_resolver, :user_mode_saver, :search_enabled,
-      :layout
+      :layout, :allow_svg
     attr_reader :non_mode_subdirs_warned, :audience_deprecation_emitted
 
     def initialize
@@ -20,6 +20,11 @@ module Markdowndocs
       @user_mode_saver = nil
       @search_enabled = false
       @layout = "markdowndocs/application"
+      # Opt-in: allow a curated, safe inline-SVG subset in rendered docs.
+      # When true, the renderer passes raw HTML through commonmarker (unsafe)
+      # and the sanitizer (the security boundary) whitelists structural SVG
+      # tags/attributes while still stripping scripts/handlers. Default off.
+      @allow_svg = false
       @non_mode_subdirs_warned = Set.new
       @audience_deprecation_emitted = Set.new
     end
