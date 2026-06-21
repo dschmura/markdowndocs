@@ -155,6 +155,48 @@ RSpec.describe Markdowndocs::Documentation do
           expect(doc.content).to include("Real")
         end
       end
+
+      it "excludes files reached via a symlinked mode directory that escapes docs_path" do
+        # Regression: bulk discovery (.all) walked mode subdirectories with a
+        # raw Dir.glob, so a symlinked mode dir like `app/docs/technical -> /etc`
+        # would surface files outside docs_path.
+        Dir.mktmpdir do |docs_tmp|
+          Dir.mktmpdir do |outside_tmp|
+            outside_file = Pathname.new(outside_tmp).join("secret.md")
+            outside_file.write("---\ntitle: Escaped Secret\n---\n# Escaped Secret\n")
+
+            docs_path = Pathname.new(docs_tmp)
+            scoped_dir_link = docs_path.join("technical")
+            File.symlink(outside_tmp, scoped_dir_link.to_s)
+
+            Markdowndocs.config.docs_path = docs_path
+            Markdowndocs.config.modes = %w[guide technical]
+
+            titles = described_class.all.map(&:title)
+            expect(titles).not_to include("Escaped Secret")
+          end
+        end
+      end
+
+      it "excludes root-level files reached via a symlink that escapes docs_path" do
+        # The root glob in .all is also exposed — same protection that
+        # find_by_slug applies must apply here.
+        Dir.mktmpdir do |docs_tmp|
+          Dir.mktmpdir do |outside_tmp|
+            outside_file = Pathname.new(outside_tmp).join("secret.md")
+            outside_file.write("---\ntitle: Escaped Secret\n---\n# Escaped Secret\n")
+
+            docs_path = Pathname.new(docs_tmp)
+            link = docs_path.join("secret.md")
+            File.symlink(outside_file.to_s, link.to_s)
+
+            Markdowndocs.config.docs_path = docs_path
+
+            titles = described_class.all.map(&:title)
+            expect(titles).not_to include("Escaped Secret")
+          end
+        end
+      end
     end
   end
 

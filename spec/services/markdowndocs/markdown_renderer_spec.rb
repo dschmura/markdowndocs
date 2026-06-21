@@ -99,6 +99,83 @@ RSpec.describe Markdowndocs::MarkdownRenderer do
         expect(html).not_to include("<script")
         expect(html).not_to include("onload")
       end
+
+      it "preserves ARIA labelling attributes so inline diagrams have accessible names" do
+        Markdowndocs.config.allow_svg = true
+        html = described_class.render(
+          %(<svg role="img" aria-label="System diagram" aria-describedby="d1" focusable="false">) +
+            %(<desc id="d1">A high-level system overview.</desc><circle cx="1" cy="1" r="1"/></svg>)
+        )
+        expect(html).to include('role="img"')
+        expect(html).to include('aria-label="System diagram"')
+        expect(html).to include('aria-describedby="d1"')
+        expect(html).to include('focusable="false"')
+        expect(html).to include("<desc")
+      end
+
+      it "preserves aria-hidden on decorative inline SVGs" do
+        Markdowndocs.config.allow_svg = true
+        html = described_class.render(
+          %(<svg aria-hidden="true"><circle cx="1" cy="1" r="1"/></svg>)
+        )
+        expect(html).to include('aria-hidden="true"')
+      end
+
+      it "preserves xmlns so downstream XML consumers can re-parse the snippet" do
+        Markdowndocs.config.allow_svg = true
+        html = described_class.render(
+          %(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><circle cx="1" cy="1" r="1"/></svg>)
+        )
+        expect(html).to include('xmlns="http://www.w3.org/2000/svg"')
+      end
+
+      after { Markdowndocs.config.allow_svg = false }
+    end
+
+    context "collapsible disclosure (<details>/<summary>)" do
+      # Disclosure is raw HTML, so it rides the same curated raw-HTML passthrough
+      # as inline SVG (config.allow_svg flips commonmarker to unsafe so the markup
+      # reaches the sanitizer — the security boundary — instead of being escaped).
+      before { Markdowndocs.config.allow_svg = true }
+      after { Markdowndocs.config.allow_svg = false }
+
+      it "preserves <details> and <summary> so docs can collapse sections" do
+        html = described_class.render("<details>\n<summary>Why</summary>\n\nBecause reasons.\n</details>")
+        expect(html).to include("<details")
+        expect(html).to include("<summary>")
+        expect(html).to include("Because reasons.")
+      end
+
+      it "preserves the open attribute so a section can default to expanded" do
+        html = described_class.render("<details open>\n<summary>S</summary>\n\nBody.\n</details>")
+        expect(html).to match(/<details[^>]*\sopen/)
+      end
+
+      it "still strips scripts and event handlers inside a disclosure" do
+        html = described_class.render(%(<details onclick="x()"><summary>S</summary><script>alert(1)</script></details>))
+        expect(html).to include("<details")
+        expect(html).not_to include("<script")
+        expect(html).not_to include("onclick")
+      end
+    end
+
+    context "when the rendering pipeline raises" do
+      it "falls back to an escaped pre block instead of returning empty" do
+        # Force any downstream failure (parse, sanitize, highlight) to fire.
+        allow(Commonmarker).to receive(:parse).and_raise(RuntimeError, "boom")
+
+        result = described_class.render("# Hello\n\nThis is **bold**.\n")
+
+        # Page is not silently wiped — the user sees their content as text,
+        # preserved verbatim in a code block.
+        expect(result).not_to eq("")
+        expect(result).to include("Hello")
+        expect(result).to include("bold")
+        # The fallback escapes — no live HTML element renders from the markdown.
+        expect(result).not_to include("<strong>")
+        # And the fallback is wrapped recognizably so hosts can style it.
+        expect(result).to include("markdowndocs-render-error")
+      end
     end
   end
 end

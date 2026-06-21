@@ -256,6 +256,43 @@ function hello() {
 
 Supported languages include Ruby, JavaScript, Python, Bash, YAML, JSON, HTML, CSS, SQL, and [many more](https://github.com/rouge-ruby/rouge/wiki/List-of-supported-languages-and-lexers).
 
+### Inline SVG (Hand-Authored Diagrams)
+
+Set `config.allow_svg = true` to opt into a curated, safe subset of inline
+SVG for diagrams written directly in markdown. The sanitizer remains the
+security boundary: `<script>`, `<foreignObject>`, `on*` event handlers, and
+`javascript:` URIs are always stripped, regardless of this setting.
+
+Allowed structural elements: `svg g path rect circle ellipse line polyline
+polygon text tspan defs marker desc`.
+
+#### Giving an SVG an accessible name
+
+Inline SVGs need an accessible name so screen readers can announce them.
+Use `role="img"` plus `aria-label`, or pair the SVG with a `<desc>` and
+`aria-describedby`:
+
+```html
+<svg role="img" aria-label="High-level system architecture"
+     viewBox="0 0 100 100">
+  …
+</svg>
+
+<svg role="img" aria-labelledby="t1" aria-describedby="d1"
+     viewBox="0 0 100 100">
+  <desc id="d1">Three-tier diagram: browser → Rails → Postgres.</desc>
+  …
+</svg>
+```
+
+Decorative SVGs (icons, dividers) should be marked `aria-hidden="true"`
+so assistive technology skips them.
+
+> The `<title>` SVG element is intentionally NOT in the safelist: the
+> HTML5 parser treats it as a raw-text element in HTML context, so the
+> name would silently escape into surrounding text. `aria-label` is the
+> reliable path.
+
 ### Categories
 
 To organize docs on the index page, map category names to slugs in your configuration:
