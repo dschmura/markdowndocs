@@ -132,6 +132,33 @@ RSpec.describe Markdowndocs::MarkdownRenderer do
       after { Markdowndocs.config.allow_svg = false }
     end
 
+    context "collapsible disclosure (<details>/<summary>)" do
+      # Disclosure is raw HTML, so it rides the same curated raw-HTML passthrough
+      # as inline SVG (config.allow_svg flips commonmarker to unsafe so the markup
+      # reaches the sanitizer — the security boundary — instead of being escaped).
+      before { Markdowndocs.config.allow_svg = true }
+      after { Markdowndocs.config.allow_svg = false }
+
+      it "preserves <details> and <summary> so docs can collapse sections" do
+        html = described_class.render("<details>\n<summary>Why</summary>\n\nBecause reasons.\n</details>")
+        expect(html).to include("<details")
+        expect(html).to include("<summary>")
+        expect(html).to include("Because reasons.")
+      end
+
+      it "preserves the open attribute so a section can default to expanded" do
+        html = described_class.render("<details open>\n<summary>S</summary>\n\nBody.\n</details>")
+        expect(html).to match(/<details[^>]*\sopen/)
+      end
+
+      it "still strips scripts and event handlers inside a disclosure" do
+        html = described_class.render(%(<details onclick="x()"><summary>S</summary><script>alert(1)</script></details>))
+        expect(html).to include("<details")
+        expect(html).not_to include("<script")
+        expect(html).not_to include("onclick")
+      end
+    end
+
     context "when the rendering pipeline raises" do
       it "falls back to an escaped pre block instead of returning empty" do
         # Force any downstream failure (parse, sanitize, highlight) to fire.

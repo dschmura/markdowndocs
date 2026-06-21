@@ -121,6 +121,7 @@ module Markdowndocs
         a img
         strong em b i u del
         code pre span div
+        details summary
       ].freeze
 
       # ARIA labelling/role attributes are useful on any element. Adding them
@@ -129,6 +130,7 @@ module Markdowndocs
       BASE_SANITIZE_ATTRS = %w[
         href title src alt align class lang
         role aria-label aria-labelledby aria-describedby aria-hidden
+        open
       ].freeze
 
       # Curated structural SVG subset. Deliberately excludes script,
