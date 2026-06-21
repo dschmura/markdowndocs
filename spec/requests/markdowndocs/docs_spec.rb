@@ -227,7 +227,6 @@ RSpec.describe "Markdowndocs::Docs", type: :request do
       expect(response).to have_http_status(:not_found)
     end
 
-
     it "returns 404 for a mode-scoped slug that doesn't exist" do
       get "/docs/technical/nonexistent"
       expect(response).to have_http_status(:not_found)
