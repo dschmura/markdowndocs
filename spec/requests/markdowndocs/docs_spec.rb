@@ -47,7 +47,7 @@ RSpec.describe "Markdowndocs::Docs", type: :request do
       get "/docs"
       expect(response.body).to include('name="current_path"')
       # request.fullpath may return "/docs" or "/docs/" depending on router normalization
-      expect(response.body).to match(/value="\/docs\/?\"/)
+      expect(response.body).to match(/value="\/docs\/?"/)
     end
   end
 
