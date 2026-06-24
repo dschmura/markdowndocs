@@ -30,6 +30,25 @@ RSpec.describe "Markdowndocs::Docs", type: :request do
       get "/docs", params: {mode: "guide"}
       expect(response.body).not_to include("Architecture")
     end
+
+    it "renders the audience switcher on the index" do
+      get "/docs"
+      expect(response.body).to include('data-controller="docs-mode"')
+      expect(response.body).to include('role="group"')
+      expect(response.body).to include("aria-pressed=")
+    end
+
+    it "renders the switcher exactly once on the index" do
+      get "/docs"
+      expect(response.body.scan('data-controller="docs-mode"').length).to eq(1)
+    end
+
+    it "the index switcher carries current_path for topic-preserving switch" do
+      get "/docs"
+      expect(response.body).to include('name="current_path"')
+      # request.fullpath may return "/docs" or "/docs/" depending on router normalization
+      expect(response.body).to match(/value="\/docs\/?"/)
+    end
   end
 
   describe "GET /docs/:slug" do
@@ -66,20 +85,23 @@ RSpec.describe "Markdowndocs::Docs", type: :request do
       expect(response.body).not_to include("gem install")
     end
 
-    # Issue #20 (WCAG 4.1.1): show.html.erb renders _navigation twice (mobile +
-    # desktop sidebars), which embeds _mode_switcher twice. The switcher must
-    # not declare a hardcoded id — Stimulus already scopes itself via
-    # data-controller="docs-mode", which can appear N times without colliding.
-    it "does not emit duplicate id=\"docs-mode-switcher\" in the rendered HTML" do
+    it "renders the audience switcher exactly once on a show page (toolbar, not duplicated in sidebars)" do
       get "/docs/welcome"
-      duplicate_count = response.body.scan('id="docs-mode-switcher"').length
-      expect(duplicate_count).to eq(0),
-        "show page must not emit any id=\"docs-mode-switcher\" — Stimulus's data-controller is the unique-scoping mechanism, and the partial renders twice (mobile + desktop sidebars)"
+      expect(response.body.scan('data-controller="docs-mode"').length).to eq(1),
+        "switcher now lives in the single top toolbar, not in both mobile + desktop sidebars"
+    end
 
-      # Sanity: the switcher IS in the DOM, just identified by data-controller.
-      controller_count = response.body.scan('data-controller="docs-mode"').length
-      expect(controller_count).to eq(2),
-        "expected two docs-mode controller instances (mobile + desktop sidebars)"
+    it "renders the mode switcher with an aria-pressed toggle-button pattern (not broken radiogroup)" do
+      # role=radiogroup / role=radio per button implies an arrow-key-driven
+      # radio pattern, but each option is a submit button inside its own form
+      # — the actual interaction is toggle, not radio. Using aria-pressed lets
+      # screen readers announce the right pattern.
+      get "/docs/welcome"
+      expect(response.body).to include('role="group"')
+      expect(response.body).to include("aria-pressed=")
+      expect(response.body).not_to include('role="radiogroup"')
+      expect(response.body).not_to include('role="radio"')
+      expect(response.body).not_to include("aria-checked=")
     end
 
     it "renders the mode switcher with current_path as a hidden field" do

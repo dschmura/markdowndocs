@@ -10,3 +10,6 @@
 # rspec failure tracking
 .rspec_status
 spec/dummy/log/test.log
+.claude/*
+agent-os/*
+CLAUDE.md

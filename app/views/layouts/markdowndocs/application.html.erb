@@ -11,6 +11,9 @@
   </head>
 
   <body class="min-h-screen flex flex-col bg-gray-50">
+    <% if flash[:notice].present? %>
+      <div role="status" aria-live="polite" class="sr-only"><%= flash[:notice] %></div>
+    <% end %>
     <%= yield :docs_header %>
 
     <main id="main-content" role="main" class="flex-1">

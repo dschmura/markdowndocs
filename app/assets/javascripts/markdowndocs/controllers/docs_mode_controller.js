@@ -16,10 +16,44 @@ export default class extends Controller {
   }
 
   static STORAGE_KEY = "markdowndocs_mode"
+  static FOCUS_KEY = "markdowndocs_focus_mode"
 
   connect() {
     if (!this.isAuthenticated()) {
       this.restoreGuestMode()
+    }
+    this.restoreFocusAfterToggle()
+  }
+
+  rememberFocus(event) {
+    // Save the mode the user just pressed so we can restore focus to the
+    // matching button after Turbo replaces the page (a11y: keep focus on
+    // the control the user actuated, not on the article wrapper).
+    try {
+      const mode = event.currentTarget.dataset.mode
+      if (mode) {
+        sessionStorage.setItem(this.constructor.FOCUS_KEY, mode)
+      }
+    } catch (e) {
+      // sessionStorage unavailable — accept the focus loss gracefully.
+    }
+  }
+
+  restoreFocusAfterToggle() {
+    let pendingMode
+    try {
+      pendingMode = sessionStorage.getItem(this.constructor.FOCUS_KEY)
+      if (pendingMode) sessionStorage.removeItem(this.constructor.FOCUS_KEY)
+    } catch (e) {
+      return
+    }
+    if (!pendingMode) return
+
+    const button = this.element.querySelector(`button[data-mode="${pendingMode}"]`)
+    if (button) {
+      // Defer past the Turbo render + autofocus on the article wrapper so
+      // we steal focus from it; otherwise autofocus would win the race.
+      window.requestAnimationFrame(() => button.focus())
     }
   }
 
