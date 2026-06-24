@@ -25,6 +25,12 @@ module Markdowndocs
         httponly: true
       }
 
+      flash[:notice] = I18n.t(
+        "markdowndocs.mode_announcement",
+        mode: I18n.t("markdowndocs.modes.#{mode}", default: mode.titleize),
+        default: "Now viewing %{mode}."
+      )
+
       redirect_to(smart_nav_target(mode, params[:current_path]), status: :see_other)
     end
 

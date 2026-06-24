@@ -82,6 +82,19 @@ RSpec.describe "Markdowndocs::Docs", type: :request do
         "expected two docs-mode controller instances (mobile + desktop sidebars)"
     end
 
+    it "renders the mode switcher with an aria-pressed toggle-button pattern (not broken radiogroup)" do
+      # role=radiogroup / role=radio per button implies an arrow-key-driven
+      # radio pattern, but each option is a submit button inside its own form
+      # — the actual interaction is toggle, not radio. Using aria-pressed lets
+      # screen readers announce the right pattern.
+      get "/docs/welcome"
+      expect(response.body).to include('role="group"')
+      expect(response.body).to include("aria-pressed=")
+      expect(response.body).not_to include('role="radiogroup"')
+      expect(response.body).not_to include('role="radio"')
+      expect(response.body).not_to include("aria-checked=")
+    end
+
     it "renders the mode switcher with current_path as a hidden field" do
       get "/docs/welcome"
       expect(response.body).to include('name="current_path"')

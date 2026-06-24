@@ -28,9 +28,14 @@
     <%= t("markdowndocs.viewing_mode") %>
   </h3>
 
+  <%# Toggle-button group, NOT a radiogroup. Each option is its own form
+      with a submit button — the actual interaction is "click to toggle",
+      so aria-pressed accurately describes state. role=radiogroup with
+      role=radio implied an arrow-key-driven radio pattern this UI does
+      not implement (every option is a tab stop, Space submits). %>
   <div
     class="space-y-2"
-    role="radiogroup"
+    role="group"
     aria-label="<%= t('markdowndocs.select_viewing_mode') %>"
   >
     <% available_modes.each do |mode| %>
@@ -45,8 +50,9 @@
         <%= f.hidden_field :current_path, value: request.fullpath, id: nil %>
         <button
           type="submit"
-          role="radio"
-          aria-checked="<%= current_mode == mode %>"
+          aria-pressed="<%= current_mode == mode %>"
+          data-mode="<%= mode %>"
+          data-action="click->docs-mode#rememberFocus"
           class="
             w-full
             text-left

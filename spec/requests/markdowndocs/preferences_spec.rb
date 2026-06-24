@@ -45,6 +45,17 @@ RSpec.describe "Markdowndocs::Preferences", type: :request do
         expect(response).to have_http_status(:unprocessable_entity)
       end
 
+      it "sets a flash notice announcing the new mode for screen readers" do
+        # Live-region announcement: the layout renders flash[:notice] inside
+        # role=status aria-live=polite, which screen readers read on the
+        # next page load. Without this, mode toggles are silent in SR.
+        patch "/docs/preference",
+          params: {mode: "technical", current_path: "/docs/billing"}
+        follow_redirect!
+        expect(response.body).to include('aria-live="polite"')
+        expect(response.body).to include("Developer Guide")
+      end
+
       it "persists the mode preference as a cookie" do
         patch "/docs/preference",
           params: {mode: "technical", current_path: "/docs/billing"}
