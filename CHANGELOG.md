@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2026-06-24
+
+### Added
+
+- **Persistent audience switcher.** The viewing-mode switcher now renders in a
+  toolbar at the top of both the docs index and every doc page (new
+  `markdowndocs/docs/_docs_toolbar` partial), instead of only the show-page
+  sidebar — the audience choice is always visible and rendered once per page.
+  `DocsController#index` and `#show` both expose `@available_modes` from
+  `config.modes`.
+- **Screen-reader mode announcement.** Switching audience sets `flash[:notice]`
+  (`markdowndocs.mode_announcement`), surfaced in a `role="status"
+  aria-live="polite"` region in the engine layout so the Turbo-replace mode
+  change isn't silent for assistive tech. Hosts may render the flash their own way.
+
+### Changed
+
+- **No-counterpart audience switch goes to the target index.** Switching to a
+  mode where the current doc has no counterpart (and no shared-root fallback)
+  now redirects to that audience's index — with a distinct flash
+  (`markdowndocs.no_counterpart_announcement`) — instead of stranding the reader
+  on a doc outside the audience they chose. Topic-preserving (scoped counterpart)
+  and shared-root docs are unchanged.
+
+### Fixed
+
+- **Mode switcher ARIA: toggle-button group, not a radiogroup.** Each mode is a
+  submit button using `aria-pressed` (was `role="radio"` / `aria-checked`, which
+  implied unimplemented arrow-key navigation). Focus returns to the chosen button
+  after the Turbo replace.
+
 ## [0.9.0] - 2026-06-21
 
 ### Added
