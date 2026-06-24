@@ -25,13 +25,25 @@ module Markdowndocs
         httponly: true
       }
 
-      flash[:notice] = I18n.t(
-        "markdowndocs.mode_announcement",
-        mode: I18n.t("markdowndocs.modes.#{mode}", default: mode.titleize),
-        default: "Now viewing %{mode}."
-      )
+      current_path = params[:current_path]
+      target = smart_nav_target(mode, current_path)
+      mode_name = I18n.t("markdowndocs.modes.#{mode}", default: mode.titleize)
 
-      redirect_to(smart_nav_target(mode, params[:current_path]), status: :see_other)
+      flash[:notice] = if redirected_to_index_from_doc?(target, current_path)
+        I18n.t(
+          "markdowndocs.no_counterpart_announcement",
+          mode: mode_name,
+          default: "No %{mode} version of this page — showing the %{mode} documentation."
+        )
+      else
+        I18n.t(
+          "markdowndocs.mode_announcement",
+          mode: mode_name,
+          default: "Now viewing %{mode}."
+        )
+      end
+
+      redirect_to(target, status: :see_other)
     end
 
     private
@@ -56,13 +68,24 @@ module Markdowndocs
       # rejection (and any other reachability rules) match what the show
       # action would actually serve. Bypassing this — e.g. with raw
       # File.exist? — can redirect the user into a 404.
-      if scoped_sibling_reachable?(slug, target_mode) && current_path != scoped_url
+      if scoped_sibling_reachable?(slug, target_mode)
         scoped_url
-      elsif root_sibling_reachable?(slug) && current_path != root_url
+      elsif root_sibling_reachable?(slug)
         root_url
       else
-        current_path
+        # No counterpart in the target mode and no shared root fallback: send the
+        # reader to that audience's index rather than stranding them on a doc
+        # outside the audience they just chose.
+        index_path
       end
+    end
+
+    # True when the switch had to fall back to the docs index because the current
+    # doc has no counterpart in the target mode (selects the flash copy below).
+    def redirected_to_index_from_doc?(target, current_path)
+      current_path.present? &&
+        target == markdowndocs.root_path.chomp("/") &&
+        extract_slug_from_path(current_path).present?
     end
 
     def scoped_sibling_reachable?(slug, target_mode)

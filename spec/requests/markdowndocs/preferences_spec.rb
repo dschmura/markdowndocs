@@ -19,11 +19,22 @@ RSpec.describe "Markdowndocs::Preferences", type: :request do
         expect(response).to redirect_to("/docs/billing")
       end
 
-      it "stays on the current path when no sibling exists in the target mode and the current URL has no shared fallback" do
-        # technical/architecture has no shared sibling.
+      it "redirects to the target-mode index when the current doc has no counterpart there" do
+        # technical/architecture has no guide counterpart and no shared root sibling,
+        # so switching to guide takes you to the guide index (not stranded on a doc
+        # that isn't part of the guide audience).
         patch "/docs/preference",
           params: {mode: "guide", current_path: "/docs/technical/architecture"}
-        expect(response).to redirect_to("/docs/technical/architecture")
+        expect(response).to redirect_to("/docs")
+      end
+
+      it "flashes a distinct 'no version' notice (not the plain announcement) on that fallback" do
+        patch "/docs/preference",
+          params: {mode: "guide", current_path: "/docs/technical/architecture"}
+        follow_redirect!
+        # mode "guide" => label "User Guide" in the dummy app.
+        expect(response.body).to include("No User Guide version")
+        expect(response.body).not_to include("Now viewing User Guide.")
       end
 
       it "stays on the current path when toggling and no scoped sibling exists for a shared doc" do
