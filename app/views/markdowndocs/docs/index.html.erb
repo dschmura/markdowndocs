@@ -6,6 +6,9 @@
        data-controller="docs-search"
        data-docs-search-index-url-value="<%= markdowndocs.search_index_path %>"
     <% end %>>
+    <%= render "markdowndocs/docs/docs_toolbar",
+      current_mode: @docs_mode,
+      available_modes: @available_modes %>
     <!-- Hero Section -->
     <div class="text-center mb-12">
       <h1 class="text-4xl font-bold text-gray-900 dark:text-slate-100 mb-4">Documentation</h1>

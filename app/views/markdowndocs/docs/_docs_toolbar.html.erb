@@ -1,0 +1,10 @@
+<%# locals: (current_mode:, available_modes:) %>
+<%# Persistent docs toolbar: the audience switcher, shown at the top of both
+    the index and every doc page. Renders nothing when only one mode exists. %>
+<% if available_modes.length > 1 %>
+  <div class="flex justify-end mb-6">
+    <%= render "markdowndocs/docs/mode_switcher",
+      current_mode: current_mode,
+      available_modes: available_modes %>
+  </div>
+<% end %>

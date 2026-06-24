@@ -30,6 +30,25 @@ RSpec.describe "Markdowndocs::Docs", type: :request do
       get "/docs", params: {mode: "guide"}
       expect(response.body).not_to include("Architecture")
     end
+
+    it "renders the audience switcher on the index" do
+      get "/docs"
+      expect(response.body).to include('data-controller="docs-mode"')
+      expect(response.body).to include('role="group"')
+      expect(response.body).to include("aria-pressed=")
+    end
+
+    it "renders the switcher exactly once on the index" do
+      get "/docs"
+      expect(response.body.scan('data-controller="docs-mode"').length).to eq(1)
+    end
+
+    it "the index switcher carries current_path for topic-preserving switch" do
+      get "/docs"
+      expect(response.body).to include('name="current_path"')
+      # request.fullpath may return "/docs" or "/docs/" depending on router normalization
+      expect(response.body).to match(/value="\/docs\/?\"/)
+    end
   end
 
   describe "GET /docs/:slug" do

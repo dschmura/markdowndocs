@@ -14,6 +14,7 @@ module Markdowndocs
       # surviving docs are dropped (see Documentation.grouped_by_category).
       @docs_by_category = Documentation.grouped_by_category(mode: @docs_mode)
       @search_enabled = Markdowndocs.config.search_enabled
+      @available_modes = Markdowndocs.config.modes
     end
 
     def search_index
