@@ -47,10 +47,17 @@ RSpec.describe Markdowndocs::MarkdownRenderer do
         expect(html).not_to match(/<table[^>]*role=/)
       end
 
-      it "names an un-captioned table with a minimal aria-label" do
+      it "names an un-captioned table with a numbered, i18n aria-label" do
         markdown = "| A | B |\n|---|---|\n| 1 | 2 |"
         html = described_class.render(markdown)
-        expect(html).to match(/<table[^>]*aria-label="Table"/)
+        expect(html).to match(/<table[^>]*aria-label="Table 1"/)
+      end
+
+      it "numbers multiple un-captioned tables distinctly" do
+        markdown = "| A |\n|---|\n| 1 |\n\ntext\n\n| B |\n|---|\n| 2 |"
+        html = described_class.render(markdown)
+        expect(html).to include('aria-label="Table 1"')
+        expect(html).to include('aria-label="Table 2"')
       end
 
       it "keeps tabindex through the sanitizer" do
