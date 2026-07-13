@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2026-07-13
+
+### Accessibility
+
+- **Keyboard-scrollable tables (WCAG 2.1.1).** A wide GFM table overflows and
+  becomes horizontally scrollable via the host's typography CSS. The renderer
+  now marks every `<table>` with `tabindex="0"` so keyboard-only users can
+  scroll it with the arrow keys (axe `scrollable-region-focusable`). The
+  table's implicit `role="table"` is preserved — no `role="region"` is added,
+  which would strip row/column semantics — and an un-captioned table gets a
+  minimal `aria-label="Table"` so the focus stop is announced. `tabindex` is
+  now in the sanitizer's base attribute allow-list.
+- **44px chrome target sizes (WCAG 2.5.5 AAA).** Sidebar table-of-contents
+  links, related-documentation links, breadcrumb links, and the audience
+  mode-switcher buttons now meet the 44×44 minimum target size (they measured
+  ~20–28px). Purely additive utility classes; no visual change beyond the
+  taller hit area.
+
 ## [0.10.0] - 2026-06-24
 
 ### Added

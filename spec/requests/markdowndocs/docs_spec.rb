@@ -110,6 +110,18 @@ RSpec.describe "Markdowndocs::Docs", type: :request do
       expect(response.body).to include('value="/docs/welcome"')
     end
 
+    it "sizes the mode-switcher buttons to the 44px AAA target floor (WCAG 2.5.5)" do
+      get "/docs/welcome"
+      # the min-h-11 utility reaches the response — the buttons measured ~28px.
+      # (The switcher's presence is pinned by the aria-pressed test above.)
+      expect(response.body).to include("min-h-11")
+    end
+
+    it "makes a rendered table keyboard-focusable end-to-end (WCAG 2.1.1)" do
+      get "/docs/quickstart"
+      expect(response.body).to match(/<table[^>]*tabindex="0"/)
+    end
+
     it "renders the mode switcher with current_path on a mode-scoped doc" do
       get "/docs/technical/architecture"
       expect(response.body).to include('name="current_path"')
