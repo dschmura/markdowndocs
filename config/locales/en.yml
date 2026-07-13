@@ -1,6 +1,7 @@
 en:
   markdowndocs:
     back_to_documentation: "Back to Documentation"
+    table_label: "Table %{number}"
     navigation_sidebar: "Navigation & Related Docs"
     viewing_mode: "Viewing Mode"
     select_viewing_mode: "Select documentation viewing mode"

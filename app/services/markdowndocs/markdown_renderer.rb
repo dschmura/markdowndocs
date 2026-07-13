@@ -109,9 +109,16 @@ module Markdowndocs
       # a static (JS-free) engine fix is worth that small amount of extra tab
       # travel.
       def mark_tables_keyboard_accessible(doc)
-        doc.css("table").each do |table|
+        doc.css("table").each_with_index do |table, index|
           table["tabindex"] = "0"
-          table["aria-label"] = "Table" unless table.at_css("caption") || table["aria-label"]
+          next if table.at_css("caption") || table["aria-label"]
+
+          # A caption-less table still needs an accessible name for its focus
+          # stop — but a page of identically-named "Table" regions is
+          # undifferentiated to a screen reader tabbing through. Number them,
+          # and route the label through I18n so non-English docs localize it.
+          table["aria-label"] = I18n.t("markdowndocs.table_label", number: index + 1,
+            default: "Table %{number}")
         end
       end
 

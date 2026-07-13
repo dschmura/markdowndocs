@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.1] - 2026-07-13
+
+### Accessibility (follow-up review)
+
+- **Caption-less tables get a numbered, localized accessible name.** v0.11.0
+  labelled every un-captioned table the hardcoded English `"Table"`, so a
+  page of tables was undifferentiated to a screen reader and unlocalized.
+  They are now `"Table 1"`, `"Table 2"`, … via the new
+  `markdowndocs.table_label` I18n key (`"Table %{number}"`).
+
 ## [0.11.0] - 2026-07-13
 
 ### Accessibility
