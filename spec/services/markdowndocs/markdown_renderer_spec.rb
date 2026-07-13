@@ -30,7 +30,42 @@ RSpec.describe Markdowndocs::MarkdownRenderer do
     it "renders tables" do
       markdown = "| A | B |\n|---|---|\n| 1 | 2 |"
       html = described_class.render(markdown)
-      expect(html).to include("<table>")
+      expect(html).to include("<table")
+      expect(html).to include("</table>")
+    end
+
+    describe "table keyboard accessibility (WCAG 2.1.1)" do
+      it "makes each table focusable so a keyboard user can scroll it" do
+        markdown = "| A | B |\n|---|---|\n| 1 | 2 |"
+        html = described_class.render(markdown)
+        expect(html).to match(/<table[^>]*tabindex="0"/)
+      end
+
+      it "does NOT override the table role (no role=region on the table itself)" do
+        markdown = "| A | B |\n|---|---|\n| 1 | 2 |"
+        html = described_class.render(markdown)
+        expect(html).not_to match(/<table[^>]*role=/)
+      end
+
+      it "names an un-captioned table with a minimal aria-label" do
+        markdown = "| A | B |\n|---|---|\n| 1 | 2 |"
+        html = described_class.render(markdown)
+        expect(html).to match(/<table[^>]*aria-label="Table"/)
+      end
+
+      it "keeps tabindex through the sanitizer" do
+        # tabindex is added AFTER parse but must survive SafeListSanitizer —
+        # it lives in BASE_SANITIZE_ATTRS for exactly this reason.
+        markdown = "| A |\n|---|\n| 1 |"
+        html = described_class.render(markdown)
+        expect(html).to include('tabindex="0"')
+      end
+
+      it "makes every table in a multi-table document focusable" do
+        markdown = "| A |\n|---|\n| 1 |\n\ntext\n\n| B |\n|---|\n| 2 |"
+        html = described_class.render(markdown)
+        expect(html.scan(/<table[^>]*tabindex="0"/).length).to eq(2)
+      end
     end
 
     context "with mode filtering" do

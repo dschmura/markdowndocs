@@ -22,3 +22,10 @@ Add to your routes:
 ```ruby
 mount Markdowndocs::Engine, at: "/docs"
 ```
+
+## Configuration reference
+
+| Option | Default | Description |
+|---|---|---|
+| `cache_expiry` | `1.hour` | How long rendered HTML is cached |
+| `allow_svg` | `false` | Permit sanitized inline SVG in docs |

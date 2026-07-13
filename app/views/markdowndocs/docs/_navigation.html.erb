@@ -7,7 +7,10 @@
         <ul class="space-y-2">
           <% toc_items.each do |item| %>
             <li class="<%= 'ml-4' if item[:level] == 3 %>">
-              <a href="#<%= item[:slug] %>" class="text-sm text-gray-700 dark:text-slate-300 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors block py-1">
+<%# min-h-11 (44px) meets WCAG 2.5.5 AAA target size — sidebar TOC links
+                  measured ~20px. flex + items-center keeps the label vertically
+                  centered in the taller hit area. %>
+              <a href="#<%= item[:slug] %>" class="text-sm text-gray-700 dark:text-slate-300 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors flex min-h-11 items-center">
                 <%= item[:text] %>
               </a>
             </li>
@@ -23,7 +26,8 @@
       <ul class="space-y-3">
         <% related_docs.each do |related_doc| %>
           <li>
-            <%= link_to related_doc.title, markdowndocs.doc_path(related_doc.slug), class: "text-sm text-indigo-700 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 font-medium transition-colors" %>
+<%# inline-flex min-h-11 (44px) meets WCAG 2.5.5 AAA target size. %>
+            <%= link_to related_doc.title, markdowndocs.doc_path(related_doc.slug), class: "text-sm text-indigo-700 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 font-medium transition-colors inline-flex min-h-11 items-center" %>
             <p class="text-xs text-gray-700 dark:text-slate-300 mt-1"><%= related_doc.description %></p>
           </li>
         <% end %>

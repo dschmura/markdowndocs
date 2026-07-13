@@ -21,7 +21,9 @@
           aria-pressed="<%= current_mode == mode %>"
           data-mode="<%= mode %>"
           data-action="click->docs-mode#rememberFocus"
-          class="px-3 py-1.5 text-sm font-medium rounded-md border transition-colors <%= (current_mode == mode) ? 'border-cyan-500 bg-cyan-50 text-cyan-900 dark:bg-cyan-900/40 dark:border-cyan-400 dark:text-cyan-100' : 'border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700' %>"
+<%# inline-flex min-h-11 (44px) meets WCAG 2.5.5 AAA target size — the
+              toggle buttons measured ~28px tall. %>
+          class="inline-flex min-h-11 items-center justify-center px-3 py-1.5 text-sm font-medium rounded-md border transition-colors <%= (current_mode == mode) ? 'border-cyan-500 bg-cyan-50 text-cyan-900 dark:bg-cyan-900/40 dark:border-cyan-400 dark:text-cyan-100' : 'border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700' %>"
         >
           <%= t("markdowndocs.modes.#{mode}", default: mode.titleize) %>
         </button>

@@ -19,7 +19,8 @@
         <% if item[:current] %>
           <span class="font-medium text-gray-900 dark:text-slate-100" aria-current="page"><%= item[:name] %></span>
         <% elsif item[:path] %>
-          <%= link_to item[:name], item[:path], class: "hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors" %>
+<%# inline-flex min-h-11 (44px) meets WCAG 2.5.5 AAA target size. %>
+          <%= link_to item[:name], item[:path], class: "hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors inline-flex min-h-11 items-center" %>
         <% else %>
           <span class="text-gray-700 dark:text-slate-300"><%= item[:name] %></span>
         <% end %>

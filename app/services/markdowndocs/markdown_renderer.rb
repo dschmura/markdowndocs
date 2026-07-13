@@ -48,7 +48,7 @@ module Markdowndocs
         options = markdown_render_options
         doc = Commonmarker.parse(markdown, options: options)
         html = doc.to_html(options: options)
-        html = apply_syntax_highlighting(html)
+        html = post_process_html(html)
         sanitize_html(html)
       rescue => e
         # Bare rescue is intentional: third-party errors from commonmarker,
@@ -66,7 +66,7 @@ module Markdowndocs
         %(<pre class="markdowndocs-render-error">#{escaped}</pre>)
       end
 
-      def apply_syntax_highlighting(html)
+      def post_process_html(html)
         # HTML5 parsing preserves case-sensitive SVG/MathML foreign-content
         # attributes (e.g. viewBox) that Nokogiri::HTML would lowercase.
         doc = Nokogiri::HTML5.fragment(html)
@@ -84,7 +84,35 @@ module Markdowndocs
           end
         end
 
+        mark_tables_keyboard_accessible(doc)
+
         doc.to_html
+      end
+
+      # A wide GFM table overflows its column and becomes horizontally
+      # scrollable — via the host's typography/prose CSS, which the engine
+      # does not control and cannot inspect at render time. A scrollable
+      # region that isn't keyboard-focusable strands keyboard-only users
+      # (WCAG 2.1.1; axe `scrollable-region-focusable`).
+      #
+      # `tabindex="0"` directly on the <table> makes it focusable so a
+      # keyboard user can scroll it with the arrow keys, whether the host CSS
+      # scrolls the table itself or a wrapper. We deliberately do NOT add
+      # `role="region"`: on a <table> that would override the implicit
+      # `role="table"` and strip row/column semantics from screen readers.
+      # A <caption> already names the table for AT; when absent we add a
+      # minimal aria-label so the focus stop is announced. The focus ring is
+      # the user-agent default (no engine CSS suppresses it).
+      #
+      # Trade-off: every table becomes a tab stop, not only the ones that
+      # actually overflow — scroll state is unknowable without a browser, and
+      # a static (JS-free) engine fix is worth that small amount of extra tab
+      # travel.
+      def mark_tables_keyboard_accessible(doc)
+        doc.css("table").each do |table|
+          table["tabindex"] = "0"
+          table["aria-label"] = "Table" unless table.at_css("caption") || table["aria-label"]
+        end
       end
 
       def lexer_exists?(language)
@@ -131,6 +159,7 @@ module Markdowndocs
         href title src alt align class lang
         role aria-label aria-labelledby aria-describedby aria-hidden
         open
+        tabindex
       ].freeze
 
       # Curated structural SVG subset. Deliberately excludes script,
@@ -159,7 +188,7 @@ module Markdowndocs
         transform opacity text-anchor dominant-baseline
         font-size font-family font-weight
         marker-start marker-end markerWidth markerHeight refX refY orient
-        id xmlns focusable tabindex
+        id xmlns focusable
       ].freeze
 
       def sanitize_html(html)
