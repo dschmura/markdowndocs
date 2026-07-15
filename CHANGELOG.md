@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Accessibility
+
+- **Scrollable code blocks are keyboard-focusable.** Long lines make a `<pre>`
+  overflow horizontally via the host's CSS; a scrollable region that isn't
+  focusable strands keyboard-only users (WCAG 2.1.1; axe
+  `scrollable-region-focusable`). Every rendered code block now carries
+  `tabindex="0"`, mirroring the same fix already applied to wide tables in
+  0.11.0. No `aria-label` is added — a `<pre>`'s own text is its accessible
+  name.
+
 ## [0.11.1] - 2026-07-13
 
 ### Accessibility (follow-up review)

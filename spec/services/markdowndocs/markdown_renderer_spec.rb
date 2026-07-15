@@ -75,6 +75,33 @@ RSpec.describe Markdowndocs::MarkdownRenderer do
       end
     end
 
+    describe "code block keyboard accessibility (WCAG 2.1.1)" do
+      it "makes a code block focusable so a keyboard user can scroll it" do
+        markdown = "```\nsome code\n```"
+        html = described_class.render(markdown)
+        expect(html).to match(/<pre[^>]*tabindex="0"/)
+      end
+
+      it "makes a syntax-highlighted code block focusable" do
+        markdown = "```ruby\nputs 'hi'\n```"
+        html = described_class.render(markdown)
+        expect(html).to include('class="highlight"')
+        expect(html).to match(/<pre[^>]*tabindex="0"/)
+      end
+
+      it "keeps the code-block tabindex through the sanitizer" do
+        markdown = "```\ncode\n```"
+        html = described_class.render(markdown)
+        expect(html).to include('tabindex="0"')
+      end
+
+      it "makes every code block in a multi-block document focusable" do
+        markdown = "```\na\n```\n\ntext\n\n```\nb\n```"
+        html = described_class.render(markdown)
+        expect(html.scan(/<pre[^>]*tabindex="0"/).length).to eq(2)
+      end
+    end
+
     context "with mode filtering" do
       let(:markdown) do
         <<~MD

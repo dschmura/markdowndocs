@@ -85,8 +85,24 @@ module Markdowndocs
         end
 
         mark_tables_keyboard_accessible(doc)
+        mark_code_blocks_keyboard_accessible(doc)
 
         doc.to_html
+      end
+
+      # A code block (<pre>) overflows horizontally on long lines and becomes
+      # scrollable via the host's CSS, which the engine does not control and
+      # cannot inspect at render time — the same keyboard-access gap as wide
+      # tables (WCAG 2.1.1; axe `scrollable-region-focusable`). `tabindex="0"`
+      # makes each <pre> focusable so a keyboard-only user can scroll it with
+      # the arrow keys. Unlike a <table> we add NO aria-label: a <pre>'s own
+      # text content is its accessible name, so the focus stop is announced
+      # with the code itself; a synthetic "Code block N" label would only add
+      # noise. Same trade-off as tables — every code block becomes a tab stop,
+      # not only the ones that actually overflow, because scroll state is
+      # unknowable without a browser and this is a static (JS-free) fix.
+      def mark_code_blocks_keyboard_accessible(doc)
+        doc.css("pre").each { |pre| pre["tabindex"] = "0" }
       end
 
       # A wide GFM table overflows its column and becomes horizontally
