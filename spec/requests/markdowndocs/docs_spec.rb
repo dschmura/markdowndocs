@@ -63,6 +63,17 @@ RSpec.describe "Markdowndocs::Docs", type: :request do
       expect(response.body).to include("Installation")
     end
 
+    # The engine is normally mounted inside a host layout that already owns the
+    # page's `main`. A second `main` here is a duplicate landmark wherever the
+    # page renders — standalone too, since the engine's own layout emits one —
+    # and axe reports it as landmark-no-duplicate-main plus
+    # landmark-main-is-top-level. Found by the host's WCAG sweep on /docs/*.
+    it "emits exactly one main landmark" do
+      get "/docs/welcome"
+      mains = Nokogiri::HTML5(response.body).css("main, [role='main']")
+      expect(mains.length).to eq(1)
+    end
+
     it "returns 404 for nonexistent slug" do
       get "/docs/nonexistent"
       expect(response).to have_http_status(:not_found)
