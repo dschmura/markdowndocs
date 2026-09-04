@@ -68,8 +68,10 @@
     <!-- Two-column layout -->
     <div class="grid grid-cols-1 gap-8
           lg:grid-cols-12">
-      <!-- Main content -->
-      <main class="lg:col-span-8">
+      <!-- Main content. A grid column, not a landmark: the page's `main` is the
+           host layout's (or this engine's own, when standalone), and a second
+           one nested inside it is a duplicate landmark. -->
+      <div class="lg:col-span-8">
         <article
           tabindex="-1"
           autofocus
@@ -78,7 +80,7 @@
             <%= raw @rendered_content %>
           </div>
         </article>
-      </main>
+      </div>
 
       <!-- Desktop sidebar (hidden on mobile, shown in grid on desktop) -->
       <div class="hidden lg:block lg:col-span-4">
