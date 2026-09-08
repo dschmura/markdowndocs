@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **The docs index filter no longer hides every card.** `search_index` keys each
+  entry on `path_slug`, but the index template tagged each card with the bare
+  `slug`, and `docs_search_controller` matches a card by comparing the two. A
+  mode-scoped document therefore never matched its own index entry, so any query
+  emptied the page. Cards now carry `path_slug`. Apps that copied
+  `docs/index.html.erb` into their own `app/views/markdowndocs/docs/` need the
+  same change locally — a gem upgrade does not reach an override.
+
 ## [0.11.3] - 2026-09-03
 
 ### Accessibility
