@@ -32,6 +32,12 @@ export default class extends Controller {
         }
       })
       this.miniSearch.addAll(docs)
+
+      // A query typed while the index was still loading was dropped:
+      // performSearch returns through showAll() while miniSearch is null, and
+      // nothing re-read the input once the fetch resolved, so the filter looked
+      // dead to anyone who started typing straight away (#42).
+      if (this.hasInputTarget && this.inputTarget.value.trim()) this.performSearch()
     } catch (e) {
       console.warn("Markdowndocs: failed to load search index", e)
     }

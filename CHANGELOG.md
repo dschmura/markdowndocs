@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **A query typed before the search index arrives is no longer dropped.**
+  `performSearch` returns through `showAll()` while `miniSearch` is still null,
+  and nothing re-read the input once the fetch resolved — so on a slow
+  connection the filter looked dead to anyone who started typing straight away.
+  The controller now re-runs the search as soon as the index is usable. Proved
+  by a browser spec in a host app rather than here: this repo has no
+  JavaScript test harness, and standing one up is tracked separately.
+
 - **The docs index filter no longer hides every card.** `search_index` keys each
   entry on `path_slug`, but the index template tagged each card with the bare
   `slug`, and `docs_search_controller` matches a card by comparing the two. A
