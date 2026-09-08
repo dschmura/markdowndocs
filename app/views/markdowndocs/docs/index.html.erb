@@ -56,7 +56,12 @@
                 md:grid-cols-2
                 lg:grid-cols-3">
               <% docs.each do |doc| %>
-                <div <% if @search_enabled %>data-docs-search-target="card" data-slug="<%= doc.slug %>"<% end %>>
+                <%# path_slug, NOT the bare slug: search_index keys every entry on
+                    path_slug, and docs_search_controller matches a card by testing
+                    this attribute against those ids. A mode-scoped document tagged
+                    with its bare slug matches nothing, which hid every card on
+                    every query (#40). %>
+                <div <% if @search_enabled %>data-docs-search-target="card" data-slug="<%= doc.path_slug %>"<% end %>>
                   <%= render "markdowndocs/docs/card", doc: doc %>
                 </div>
               <% end %>

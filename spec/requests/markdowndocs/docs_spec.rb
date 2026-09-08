@@ -229,6 +229,25 @@ RSpec.describe "Markdowndocs::Docs", type: :request do
         expect(ids).to include("technical/billing")
         expect(ids).to include("billing")
       end
+
+      # The filter is the pairing of these two values, not either one alone:
+      # docs_search_controller matches a card by testing its data-slug against
+      # the index ids. A card tagged with the bare slug of a mode-scoped
+      # document matches nothing, so every card hides on every query. Assert the
+      # invariant rather than either side's format, so a future change to the id
+      # scheme has to move both halves together.
+      it "tags every rendered card with an id the search index actually carries" do
+        get "/docs", params: {mode: "technical"}
+        card_slugs = Nokogiri::HTML5(response.body)
+          .css("[data-docs-search-target='card']")
+          .map { |card| card["data-slug"] }
+
+        get "/docs/search_index"
+        index_ids = JSON.parse(response.body).map { |doc| doc["id"] }
+
+        expect(card_slugs).not_to be_empty
+        expect(card_slugs - index_ids).to be_empty
+      end
     end
   end
 
