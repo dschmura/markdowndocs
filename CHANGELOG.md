@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.4] - 2026-09-23
+
+Two search fixes. Neither changes an API, but the second one asks something of
+apps that have overridden the docs index template.
+
 ### Fixed
 
 - **A query typed before the search index arrives is no longer dropped.**
