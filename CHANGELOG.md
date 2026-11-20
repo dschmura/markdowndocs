@@ -14,6 +14,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   security fixes. Apps still on 3.2 can stay on markdowndocs 0.11.x until they
   upgrade Ruby.
 
+### Security
+
+- **markdowndocs now requires rails-html-sanitizer 1.7.2 or later** (was
+  `~> 1.6`). The sanitizer is markdowndocs' main defence against unsafe HTML
+  in rendered docs, and 1.7.2 fixes a possible XSS through shared scrubber
+  state when several threads sanitize at once, which is the normal case under
+  a multi-threaded server like Puma. It also requires loofah 2.25.3, so host
+  apps pick up loofah's XSS fixes too. Run `bundle update markdowndocs` and
+  Bundler will upgrade both.
+
 ### Changed
 
 - CI now tests Ruby 3.3, 3.4 and 4.0, and the gem is linted and released on
