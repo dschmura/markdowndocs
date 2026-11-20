@@ -269,7 +269,7 @@ module Markdowndocs
         if Array(raw).map(&:to_s).sort == Markdowndocs.config.modes.sort
           "This doc is already declared multi-audience; remove the `audience:` key (root files are visible in every mode)."
         else
-          modes = Array(raw).map(&:to_s).join(", ")
+          modes = Array(raw).join(", ")
           "This doc declares audience: [#{modes}]. Path-based routing supports only a single mode per file; either move the file to a single mode subdirectory or leave the file at root and remove `audience:` (root is shared)."
         end
       else

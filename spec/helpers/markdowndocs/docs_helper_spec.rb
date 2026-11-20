@@ -51,6 +51,15 @@ RSpec.describe Markdowndocs::DocsHelper, type: :helper do
       expect(result).not_to include('class="anchor"')
     end
 
+    it "turns the renderer's real heading output into a clean, linkable heading" do
+      html = Markdowndocs::MarkdownRenderer.render("## Getting Started")
+      heading = Nokogiri::HTML5.fragment(helper.add_heading_anchors(html)).at_css("h2")
+
+      expect(heading["id"]).to eq("getting-started")
+      expect(heading.text).to eq("Getting Started")
+      expect(heading.css("a.anchor")).to be_empty
+    end
+
     it "returns blank HTML unchanged" do
       expect(helper.add_heading_anchors("")).to eq("")
       expect(helper.add_heading_anchors(nil)).to be_nil

@@ -19,7 +19,7 @@ A drop-in mountable Rails engine that turns a folder of markdown files into a br
 
 ## Requirements
 
-- Ruby >= 3.2
+- Ruby >= 3.3
 - Rails >= 7.1
 
 ## Installation

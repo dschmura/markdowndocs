@@ -6,7 +6,9 @@ RSpec.describe Markdowndocs::MarkdownRenderer do
   describe ".render" do
     it "renders markdown to HTML" do
       html = described_class.render("# Hello\n\nWorld")
-      expect(html).to include("Hello</h1>")
+      fragment = Nokogiri::HTML5.fragment(html)
+
+      expect(fragment.at_css("h1").text).to eq("Hello")
       expect(html).to include("<p>World</p>")
     end
 
