@@ -32,5 +32,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency "rails", ">= 7.1"
   spec.add_dependency "commonmarker", ">= 1.0"
   spec.add_dependency "rouge", "~> 4.0"
-  spec.add_dependency "rails-html-sanitizer", "~> 1.6"
+  spec.add_dependency "rails-html-sanitizer", "~> 1.7", ">= 1.7.2"
 end
