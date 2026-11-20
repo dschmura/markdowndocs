@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-11-20
+
+A security release. Host apps get patched HTML sanitization, and the gem drops
+Ruby 3.2, which no longer receives security fixes. No API changes, but apps
+still on Ruby 3.2 should stay on 0.11.x.
+
 ### Removed
 
 - **Ruby 3.2 is no longer supported.** `required_ruby_version` is now
