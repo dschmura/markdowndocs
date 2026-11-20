@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.description = "Mountable Rails engine that renders markdown files as a browsable documentation site with syntax highlighting, TOC generation, category grouping, and mode-based content filtering."
   spec.homepage = "https://github.com/dschmura/markdowndocs"
   spec.license = "MIT"
-  spec.required_ruby_version = ">= 3.2.0"
+  spec.required_ruby_version = ">= 3.3.0"
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = spec.homepage

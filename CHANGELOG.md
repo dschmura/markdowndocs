@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **Ruby 3.2 is no longer supported.** `required_ruby_version` is now
+  `>= 3.3.0`. Ruby 3.2 reached end of life in March 2026 and no longer receives
+  security fixes. Apps still on 3.2 can stay on markdowndocs 0.11.x until they
+  upgrade Ruby.
+
+### Changed
+
+- CI now tests Ruby 3.3, 3.4 and 4.0, and the gem is linted and released on
+  Ruby 3.4 instead of 3.2.
+- Development dependencies refreshed, including Rails 8.1.4.1 and
+  commonmarker 2.10.1. commonmarker 2.10 places the heading anchor after the
+  heading text instead of before it; rendered docs pages are unaffected
+  because `add_heading_anchors` assigns heading IDs itself and strips the
+  empty anchor links.
+
 ## [0.11.4] - 2026-09-23
 
 Two search fixes. Neither changes an API, but the second one asks something of
